@@ -1,0 +1,51 @@
+<<<<<<<< HEAD:Display/test/esp32-3248S035C_bak/lib47f/lvgl/font/lv_font_fmt_txt.c.d
+.pio/build/esp32-3248S035C/lib47f/lvgl/font/lv_font_fmt_txt.c.o: \
+========
+.pio/build/esp32-3248S035C/libb53/lvgl/font/lv_font_fmt_txt.c.o: \
+>>>>>>>> 7ccdc67ce7f843a4bda70c03d0785e5f3107cdfe:ESPNow/espnow_receiverTest_with_LVGL/.pio/build/esp32-3248S035C/libb53/lvgl/font/lv_font_fmt_txt.c.d
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/lv_font_fmt_txt.c \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/lv_font.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../lv_conf_internal.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../lv_conf_kconfig.h \
+<<<<<<<< HEAD:Display/test/esp32-3248S035C_bak/lib47f/lvgl/font/lv_font_fmt_txt.c.d
+ C:/Users/Raizen/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/dio_qspi/include/sdkconfig.h \
+ C:/Users/Raizen/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_common/include/esp_attr.h \
+ C:/Users/Raizen/Documents/HARMONY/Harmony-ESP/Display/test/include/lv_conf.h \
+========
+ C:/Users/ainma/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/dio_qspi/include/sdkconfig.h \
+ C:/Users/ainma/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_common/include/esp_attr.h \
+ D:/Harmony/Harmony-ESP/Display/test/include/lv_conf.h \
+>>>>>>>> 7ccdc67ce7f843a4bda70c03d0785e5f3107cdfe:ESPNow/espnow_receiverTest_with_LVGL/.pio/build/esp32-3248S035C/libb53/lvgl/font/lv_font_fmt_txt.c.d
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/lv_symbol_def.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_area.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../lv_conf_internal.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/lv_font_fmt_txt.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_assert.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_log.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_types.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_mem.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_types.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_gc.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_ll.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_timer.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../hal/lv_hal_tick.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../hal/../lv_conf_internal.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/lv_img_cache.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/lv_img_decoder.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../lv_conf_internal.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/lv_img_buf.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_color.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/../lv_conf_internal.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_assert.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_math.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_types.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_area.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_fs.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_types.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/lv_draw_mask.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../draw/../misc/lv_math.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../core/lv_obj_pos.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/../core/../misc/lv_area.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_log.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_utils.h \
+ .pio/libdeps/esp32-3248S035C/lvgl/src/font/../misc/lv_mem.h
