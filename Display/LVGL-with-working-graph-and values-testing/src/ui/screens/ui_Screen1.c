@@ -1502,7 +1502,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_width(ui_Label22, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label22, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_Label22, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label22, "Frequency (Hz):");
+    lv_label_set_text(ui_Label22, "Energy (kWh):");
     lv_obj_set_style_text_font(ui_Label22, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Label23 = lv_label_create(ui_Container16);
@@ -1534,12 +1534,12 @@ void ui_Screen1_screen_init(void)
     lv_label_set_text(ui_brgyPower, "521.52");
     lv_obj_set_style_text_font(ui_brgyPower, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_brgyFreq = lv_label_create(ui_Container19);
-    lv_obj_set_width(ui_brgyFreq, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_brgyFreq, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_align(ui_brgyFreq, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_brgyFreq, "60");
-    lv_obj_set_style_text_font(ui_brgyFreq, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_brgyEnergy = lv_label_create(ui_Container19);
+    lv_obj_set_width(ui_brgyEnergy, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_brgyEnergy, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_brgyEnergy, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_brgyEnergy, "60");
+    lv_obj_set_style_text_font(ui_brgyEnergy, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_brgyFactor = lv_label_create(ui_Container19);
     lv_obj_set_width(ui_brgyFactor, LV_SIZE_CONTENT);   /// 1
@@ -1579,7 +1579,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_width(ui_Label30, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label30, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_Label30, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label30, "Frequency (Hz):");
+    lv_label_set_text(ui_Label30, "Energy (kWh):");
     lv_obj_set_style_text_font(ui_Label30, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Label34 = lv_label_create(ui_Container11);
@@ -1611,12 +1611,12 @@ void ui_Screen1_screen_init(void)
     lv_label_set_text(ui_healthPower, "521.52");
     lv_obj_set_style_text_font(ui_healthPower, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_healthFreq = lv_label_create(ui_Container17);
-    lv_obj_set_width(ui_healthFreq, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_healthFreq, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_align(ui_healthFreq, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_healthFreq, "60");
-    lv_obj_set_style_text_font(ui_healthFreq, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_healthEnergy = lv_label_create(ui_Container17);
+    lv_obj_set_width(ui_healthEnergy, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_healthEnergy, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_healthEnergy, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_healthEnergy, "60");
+    lv_obj_set_style_text_font(ui_healthEnergy, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_healthFactor = lv_label_create(ui_Container17);
     lv_obj_set_width(ui_healthFactor, LV_SIZE_CONTENT);   /// 1
@@ -1656,7 +1656,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_width(ui_Label39, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label39, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_Label39, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label39, "Frequency (Hz):");
+    lv_label_set_text(ui_Label39, "Energy (kWh):");
     lv_obj_set_style_text_font(ui_Label39, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Label40 = lv_label_create(ui_Container18);
@@ -1688,12 +1688,12 @@ void ui_Screen1_screen_init(void)
     lv_label_set_text(ui_daycarePower, "521.52");
     lv_obj_set_style_text_font(ui_daycarePower, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_daycareFreq = lv_label_create(ui_Container20);
-    lv_obj_set_width(ui_daycareFreq, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_daycareFreq, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_align(ui_daycareFreq, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_daycareFreq, "60");
-    lv_obj_set_style_text_font(ui_daycareFreq, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_daycareEnergy = lv_label_create(ui_Container20);
+    lv_obj_set_width(ui_daycareEnergy, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_daycareEnergy, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_daycareEnergy, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_daycareEnergy, "60");
+    lv_obj_set_style_text_font(ui_daycareEnergy, &ui_font_Roboto_Bold_12, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_daycareFactor = lv_label_create(ui_Container20);
     lv_obj_set_width(ui_daycareFactor, LV_SIZE_CONTENT);   /// 1
@@ -1708,7 +1708,7 @@ void ui_Screen1_screen_init(void)
 
     ui_Container12 = lv_obj_create(ui_SensorPage);
     lv_obj_remove_style_all(ui_Container12);
-    lv_obj_set_width(ui_Container12, 129);
+    lv_obj_set_width(ui_Container12, 55);
     lv_obj_set_height(ui_Container12, 222);
     lv_obj_set_x(ui_Container12, -165);
     lv_obj_set_y(ui_Container12, 0);
@@ -1806,7 +1806,7 @@ void ui_Screen1_screen_init(void)
 
     ui_Container15 = lv_obj_create(ui_SensorPage);
     lv_obj_remove_style_all(ui_Container15);
-    lv_obj_set_width(ui_Container15, 28);
+    lv_obj_set_width(ui_Container15, 30);
     lv_obj_set_height(ui_Container15, 222);
     lv_obj_set_x(ui_Container15, -165);
     lv_obj_set_y(ui_Container15, 0);

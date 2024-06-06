@@ -10,13 +10,46 @@
 #include "chartUpdater.h"
 #include "espNow.h"
 
+
 /* ------------- VARIABLES -------------*/
-double solarPower;
-double windPower;
-double solarWindVoltage;
-double solarWindCurrent;
-double solarWindPower;
-double totalConsumed;
+struct SmoothedSensorReadings
+{
+  float Solar_Voltage;
+  float Solar_Current;
+  float Wind_Voltage;
+  float Wind_Current;
+  float WindSpeed_ms;
+  float WindSpeed_kph;
+  int Wind_Direction;
+  float Battery_Voltage;
+  int Battery_Percentage;
+  float PZEM_A_Voltage;
+  float PZEM_A_Current;
+  float PZEM_A_Power;
+  float PZEM_A_Energy;
+  float PZEM_A_Frequency;
+  float PZEM_A_PowerFactor;
+  float PZEM_B_Voltage;
+  float PZEM_B_Current;
+  float PZEM_B_Power;
+  float PZEM_B_Energy;
+  float PZEM_B_Frequency;
+  float PZEM_B_PowerFactor;
+  float PZEM_C_Voltage;
+  float PZEM_C_Current;
+  float PZEM_C_Power;
+  float PZEM_C_Energy;
+  float PZEM_C_Frequency;
+  float PZEM_C_PowerFactor;
+
+  float Solar_Power;
+  float Wind_Power;
+
+  float Total_Power_Consumption;
+  float Toal_Energy_Consumption;
+};
+
+SmoothedSensorReadings SensorData;
 
 String windDirection;
 String powerStatus;
@@ -38,9 +71,12 @@ void setup()
 {
   smartdisplay_init();
   auto disp = lv_disp_get_default();
-  lv_disp_set_rotation(disp, LV_DISP_ROT_90);
+  lv_disp_set_rotation(disp, LV_DISP_ROT_270);
   ui_init();
-  Serial.begin(115200);
+
+  Serial2.begin(115200, SERIAL_8N1, 35, 22);
+
+  Serial.begin(115200, SERIAL_8N1);
   wifiNowSetup();
 }
 /* ------------- END OF SETUP ------------- */
@@ -49,6 +85,151 @@ void setup()
 void loop()
 {
   checkWiFiConnection();
+  
+  if (Serial2.available())
+  {
+    String receivedData = Serial2.readStringUntil('\n');
+    Serial.println(receivedData);
+    Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
+                 SensorData.Solar_Voltage,
+                 SensorData.Solar_Current,
+                 SensorData.Wind_Voltage,
+                 SensorData.Wind_Current,
+                 SensorData.WindSpeed_ms,
+                 SensorData.WindSpeed_kph,
+                 SensorData.Wind_Direction,
+                 SensorData.Battery_Voltage,
+                 SensorData.Battery_Percentage,
+                 SensorData.PZEM_A_Voltage,
+                 SensorData.PZEM_A_Current,
+                 SensorData.PZEM_A_Power,
+                 SensorData.PZEM_A_Energy,
+                 SensorData.PZEM_A_Frequency,
+                 SensorData.PZEM_A_PowerFactor,
+                 SensorData.PZEM_B_Voltage,
+                 SensorData.PZEM_B_Current,
+                 SensorData.PZEM_B_Power,
+                 SensorData.PZEM_B_Energy,
+                 SensorData.PZEM_B_Frequency,
+                 SensorData.PZEM_B_PowerFactor,
+                 SensorData.PZEM_C_Voltage,
+                 SensorData.PZEM_C_Current,
+                 SensorData.PZEM_C_Power,
+                 SensorData.PZEM_C_Energy,
+                 SensorData.PZEM_C_Frequency,
+                 SensorData.PZEM_C_PowerFactor);
+
+    int startIdx = 0;
+    int endIdx = receivedData.indexOf(',');
+    SensorData.Solar_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Solar_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Wind_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Wind_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.WindSpeed_ms = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.WindSpeed_kph = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Wind_Direction = receivedData.substring(startIdx, endIdx).toInt();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Battery_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.Battery_Percentage = receivedData.substring(startIdx, endIdx).toInt();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_Power = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_Energy = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_A_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_Power = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_Energy = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_B_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_Power = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_Energy = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.PZEM_C_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+  }
+  
+  SensorData.Solar_Power = SensorData.Solar_Voltage * SensorData.Solar_Current;
+  SensorData.Wind_Power = SensorData.Wind_Voltage * SensorData.Wind_Current;
 
   sensorStatus(ui_statusBattVoltage, SENSOR_ERROR);
   static uint32_t prev_millis = 0;
@@ -71,9 +252,9 @@ void loop()
 /* ------------- BATTERY -------------*/
 void forBatt()
 {
-  lv_bar_set_value(ui_batteryBar, battPercent, LV_ANIM_OFF);         // updates battery bar
-  lv_label_set_text(ui_batteryPercent, String(battPercent).c_str()); // updates battery percent label
-  chartBattUpdate(battPercent, id);                                  // updates battery chart
+  lv_bar_set_value(ui_batteryBar, SensorData.Battery_Percentage, LV_ANIM_OFF);         // updates battery bar
+  lv_label_set_text(ui_batteryPercent, String(SensorData.Battery_Percentage).c_str()); // updates battery percent label
+  chartBattUpdate(SensorData.Battery_Percentage, id);                                                    // updates battery chart
 
   // updates chart every hour and resets it every day
   if (id >= 23)
@@ -88,7 +269,7 @@ void forBatt()
 /* ------------- END OF BATTERY -------------*/
 
 /* ------------- LABELS -------------*/
-String direction(double windDegrees)
+String direction(int windDegrees)
 {
   if (windDegrees > 337 || windDegrees <= 25)
   {
@@ -128,7 +309,7 @@ String direction(double windDegrees)
   }
 }
 
-void facilityStatus(double totalConsumed)
+void facilityStatus(float totalConsumed)
 {
   if (totalConsumed <= 500)
   {
@@ -160,62 +341,60 @@ void facilityStatus(double totalConsumed)
 void forLabels()
 {
   /* ------------- SOLAR VALUES ------------- */
-  solarPower = solarVoltage * solarCurrent;
-  lv_label_set_text(ui_solarVoltage, String(solarVoltage).c_str());
-  lv_label_set_text(ui_solarCurrent, String(solarCurrent).c_str());
-  lv_label_set_text(ui_solarPower, String(solarPower).c_str());
+  lv_label_set_text(ui_solarVoltage, String(SensorData.Solar_Voltage).c_str());
+  lv_label_set_text(ui_solarCurrent, String(SensorData.Solar_Current).c_str());
+  lv_label_set_text(ui_solarPower, String(SensorData.Solar_Power).c_str());
 
   /* ------------- WIND VALUES ------------- */
-  windPower = windVoltage * windCurrent;
-  lv_label_set_text(ui_windVoltage, String(windVoltage).c_str());
-  lv_label_set_text(ui_windCurrent, String(windCurrent).c_str());
-  lv_label_set_text(ui_windPower, String(windPower).c_str());
+  lv_label_set_text(ui_windVoltage, String(SensorData.Wind_Voltage).c_str());
+  lv_label_set_text(ui_windCurrent, String(SensorData.Wind_Current).c_str());
+  lv_label_set_text(ui_windPower, String(SensorData.Wind_Power).c_str());
 
   /* ------------- SOLAR & WIND VALUES ------------- */
-  solarWindVoltage = solarVoltage + windVoltage;
-  solarWindCurrent = solarCurrent + windCurrent;
-  solarWindPower = solarWindVoltage * solarWindCurrent;
+  float solarWindVoltage = SensorData.Solar_Voltage + SensorData.Solar_Current;
+  float solarWindCurrent = SensorData.Solar_Current + SensorData.Wind_Current;
+  float solarWindPower = SensorData.Solar_Power + SensorData.Wind_Power;
   lv_label_set_text(ui_solarWindVoltage, String(solarWindVoltage).c_str());
   lv_label_set_text(ui_solarWindCurrent, String(solarWindCurrent).c_str());
   lv_label_set_text(ui_solarWindPower, String(solarWindPower).c_str());
 
-  lv_label_set_text(ui_speedWind, String(windSpeed).c_str());
-  lv_label_set_text(ui_degreesWind, String(windDegrees).c_str());
-  lv_label_set_text(ui_speedSolarWind, String(windSpeed).c_str());
-  lv_label_set_text(ui_degreesSolarWind, String(windDegrees).c_str());
+  lv_label_set_text(ui_speedWind, String(SensorData.WindSpeed_kph).c_str());
+  lv_label_set_text(ui_degreesWind, String(SensorData.Wind_Direction).c_str());
+  lv_label_set_text(ui_speedSolarWind, String(SensorData.WindSpeed_kph).c_str());
+  lv_label_set_text(ui_degreesSolarWind, String(SensorData.Wind_Direction).c_str());
 
-  windDirection = direction(windDegrees);
+  windDirection = direction(SensorData.Wind_Direction);
 
   lv_label_set_text(ui_directionWind, windDirection.c_str());
   lv_label_set_text(ui_directionSolarWind, windDirection.c_str());
 
   /* ------------- CONSUMPTION VALUES ------------- */
-  totalConsumed = brgyHall[0] + healthCenter[0] + daycare[0];
-  facilityStatus(totalConsumed);
+  SensorData.Total_Power_Consumption = SensorData.PZEM_A_Power + SensorData.PZEM_B_Power + SensorData.PZEM_C_Power;
+  facilityStatus(SensorData.Total_Power_Consumption);
   // for brgy hall
-  lv_label_set_text(ui_brgyPower, String(brgyHall[0]).c_str());
-  lv_label_set_text(ui_brgyPower1, String(brgyHall[0]).c_str());
-  lv_label_set_text(ui_brgyFreq, String(brgyHall[1]).c_str());
-  lv_label_set_text(ui_brgyFactor, String(brgyHall[2]).c_str());
+  lv_label_set_text(ui_brgyPower, String(SensorData.PZEM_A_Power).c_str());
+  lv_label_set_text(ui_brgyPower1, String(SensorData.PZEM_A_Power).c_str());
+  lv_label_set_text(ui_brgyEnergy, String(SensorData.PZEM_A_Energy).c_str());
+  lv_label_set_text(ui_brgyFactor, String(SensorData.PZEM_A_PowerFactor).c_str());
   // for health center
-  lv_label_set_text(ui_healthPower, String(healthCenter[0]).c_str());
-  lv_label_set_text(ui_healthPower1, String(healthCenter[0]).c_str());
-  lv_label_set_text(ui_healthFreq, String(healthCenter[1]).c_str());
-  lv_label_set_text(ui_healthFactor, String(healthCenter[2]).c_str());
+  lv_label_set_text(ui_healthPower, String(SensorData.PZEM_B_Power).c_str());
+  lv_label_set_text(ui_healthPower1, String(SensorData.PZEM_B_Power).c_str());
+  lv_label_set_text(ui_healthEnergy, String(SensorData.PZEM_B_Energy).c_str());
+  lv_label_set_text(ui_healthFactor, String(SensorData.PZEM_B_PowerFactor).c_str());
   // for daycare center
-  lv_label_set_text(ui_daycarePower, String(daycare[0]).c_str());
-  lv_label_set_text(ui_daycarePower, String(daycare[0]).c_str());
-  lv_label_set_text(ui_daycareFreq, String(daycare[1]).c_str());
-  lv_label_set_text(ui_daycareFactor, String(daycare[2]).c_str());
+  lv_label_set_text(ui_daycarePower, String(SensorData.PZEM_C_Power).c_str());
+  lv_label_set_text(ui_daycarePower, String(SensorData.PZEM_C_Power).c_str());
+  lv_label_set_text(ui_daycareEnergy, String(SensorData.PZEM_C_Energy).c_str());
+  lv_label_set_text(ui_daycareFactor, String(SensorData.PZEM_C_PowerFactor).c_str());
 }
 
 void forCharts()
 {
-  chartSolarWindUpdate(1, solarVoltage, solarCurrent, solarPower);             // solar voltage, current, power chart
-  chartSolarWindUpdate(2, windVoltage, windCurrent, windPower);                // wind voltage, current, power chart
-  chartSolarWindUpdate(3, solarWindVoltage, solarWindCurrent, solarWindPower); // solar and wind voltage, current, power chart
+  chartSolarWindUpdate(1, SensorData.Solar_Voltage, SensorData.Solar_Current, SensorData.Solar_Power);             // solar voltage, current, power chart
+  chartSolarWindUpdate(2, SensorData.Wind_Voltage, SensorData.Wind_Current, SensorData.Wind_Power);                // wind voltage, current, power chart
+  chartSolarWindUpdate(3, (SensorData.Solar_Voltage + SensorData.Wind_Voltage), (SensorData.Solar_Current + SensorData.Wind_Current), (SensorData.Solar_Power + SensorData.Wind_Power)); // solar and wind voltage, current, power chart
 
-  chartConsumptionUpdate(totalConsumed, brgyHall[0], healthCenter[0], daycare[0]); // total consumed brgy hall, health center, daycare chart
+  chartConsumptionUpdate(SensorData.Total_Power_Consumption, SensorData.PZEM_A_Power, SensorData.PZEM_B_Power, SensorData.PZEM_C_Power); // total consumed brgy hall, health center, daycare chart
 }
 
 void backLight()
