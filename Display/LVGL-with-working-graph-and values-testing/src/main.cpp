@@ -1,3 +1,14 @@
+/*===========================================================================================
+▐▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▌
+▐ ███████╗███████╗██████╗ ██████╗ ██████╗               ██╗    ██╗   ██╗ ██████╗ ██╗      ▌
+▐ ██╔════╝██╔════╝██╔══██╗╚════██╗╚════██╗              ██║    ██║   ██║██╔════╝ ██║      ▌
+▐ █████╗  ███████╗██████╔╝ █████╔╝ █████╔╝    █████╗    ██║    ██║   ██║██║  ███╗██║      ▌
+▐ ██╔══╝  ╚════██║██╔═══╝  ╚═══██╗██╔═══╝     ╚════╝    ██║    ╚██╗ ██╔╝██║   ██║██║      ▌
+▐ ███████╗███████║██║     ██████╔╝███████╗              ███████╗╚████╔╝ ╚██████╔╝███████╗ ▌
+▐ ╚══════╝╚══════╝╚═╝     ╚═════╝ ╚══════╝              ╚══════╝ ╚═══╝   ╚═════╝ ╚══════╝ ▌
+▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌
+===========================================================================================*/
+
 #include <Arduino.h>
 #include <esp32_smartdisplay.h>
 #include <ui/ui.h>
@@ -9,7 +20,6 @@
 
 #include "chartUpdater.h"
 #include "espNow.h"
-
 
 /* ------------- VARIABLES -------------*/
 struct SmoothedSensorReadings
@@ -41,6 +51,8 @@ struct SmoothedSensorReadings
   float PZEM_C_Energy;
   float PZEM_C_Frequency;
   float PZEM_C_PowerFactor;
+  String RTC_Date;
+  String RTC_Time;
 
   float Solar_Power;
   float Wind_Power;
@@ -85,39 +97,10 @@ void setup()
 void loop()
 {
   checkWiFiConnection();
-  
+
   if (Serial2.available())
   {
     String receivedData = Serial2.readStringUntil('\n');
-    Serial.println(receivedData);
-    Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
-                 SensorData.Solar_Voltage,
-                 SensorData.Solar_Current,
-                 SensorData.Wind_Voltage,
-                 SensorData.Wind_Current,
-                 SensorData.WindSpeed_ms,
-                 SensorData.WindSpeed_kph,
-                 SensorData.Wind_Direction,
-                 SensorData.Battery_Voltage,
-                 SensorData.Battery_Percentage,
-                 SensorData.PZEM_A_Voltage,
-                 SensorData.PZEM_A_Current,
-                 SensorData.PZEM_A_Power,
-                 SensorData.PZEM_A_Energy,
-                 SensorData.PZEM_A_Frequency,
-                 SensorData.PZEM_A_PowerFactor,
-                 SensorData.PZEM_B_Voltage,
-                 SensorData.PZEM_B_Current,
-                 SensorData.PZEM_B_Power,
-                 SensorData.PZEM_B_Energy,
-                 SensorData.PZEM_B_Frequency,
-                 SensorData.PZEM_B_PowerFactor,
-                 SensorData.PZEM_C_Voltage,
-                 SensorData.PZEM_C_Current,
-                 SensorData.PZEM_C_Power,
-                 SensorData.PZEM_C_Energy,
-                 SensorData.PZEM_C_Frequency,
-                 SensorData.PZEM_C_PowerFactor);
 
     int startIdx = 0;
     int endIdx = receivedData.indexOf(',');
@@ -226,8 +209,16 @@ void loop()
     startIdx = endIdx + 1;
     endIdx = receivedData.indexOf(',', startIdx);
     SensorData.PZEM_C_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.RTC_Date = receivedData.substring(startIdx, endIdx);
+
+    startIdx = endIdx + 1;
+    endIdx = receivedData.indexOf(',', startIdx);
+    SensorData.RTC_Time = receivedData.substring(startIdx, endIdx);
   }
-  
+
   SensorData.Solar_Power = SensorData.Solar_Voltage * SensorData.Solar_Current;
   SensorData.Wind_Power = SensorData.Wind_Voltage * SensorData.Wind_Current;
 
@@ -254,7 +245,7 @@ void forBatt()
 {
   lv_bar_set_value(ui_batteryBar, SensorData.Battery_Percentage, LV_ANIM_OFF);         // updates battery bar
   lv_label_set_text(ui_batteryPercent, String(SensorData.Battery_Percentage).c_str()); // updates battery percent label
-  chartBattUpdate(SensorData.Battery_Percentage, id);                                                    // updates battery chart
+  chartBattUpdate(SensorData.Battery_Percentage, id);                                  // updates battery chart
 
   // updates chart every hour and resets it every day
   if (id >= 23)
@@ -340,6 +331,10 @@ void facilityStatus(float totalConsumed)
 
 void forLabels()
 {
+  /* ------------- TIME AND DATE ------------- */
+  lv_label_set_text(ui_headerDate, SensorData.RTC_Date);
+  lv_label_set_text(ui_headerTime, SensorData.RTC_Time);
+
   /* ------------- SOLAR VALUES ------------- */
   lv_label_set_text(ui_solarVoltage, String(SensorData.Solar_Voltage).c_str());
   lv_label_set_text(ui_solarCurrent, String(SensorData.Solar_Current).c_str());
@@ -390,8 +385,8 @@ void forLabels()
 
 void forCharts()
 {
-  chartSolarWindUpdate(1, SensorData.Solar_Voltage, SensorData.Solar_Current, SensorData.Solar_Power);             // solar voltage, current, power chart
-  chartSolarWindUpdate(2, SensorData.Wind_Voltage, SensorData.Wind_Current, SensorData.Wind_Power);                // wind voltage, current, power chart
+  chartSolarWindUpdate(1, SensorData.Solar_Voltage, SensorData.Solar_Current, SensorData.Solar_Power);                                                                                   // solar voltage, current, power chart
+  chartSolarWindUpdate(2, SensorData.Wind_Voltage, SensorData.Wind_Current, SensorData.Wind_Power);                                                                                      // wind voltage, current, power chart
   chartSolarWindUpdate(3, (SensorData.Solar_Voltage + SensorData.Wind_Voltage), (SensorData.Solar_Current + SensorData.Wind_Current), (SensorData.Solar_Power + SensorData.Wind_Power)); // solar and wind voltage, current, power chart
 
   chartConsumptionUpdate(SensorData.Total_Power_Consumption, SensorData.PZEM_A_Power, SensorData.PZEM_B_Power, SensorData.PZEM_C_Power); // total consumed brgy hall, health center, daycare chart

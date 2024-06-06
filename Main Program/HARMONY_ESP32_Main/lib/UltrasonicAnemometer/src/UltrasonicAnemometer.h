@@ -2,6 +2,7 @@
 #define ULTRASONICANEMOMETER_H
 
 #include <SoftwareSerial.h>
+#include <cmath> // For NAN constant
 
 class UltrasonicAnemometer
 {
