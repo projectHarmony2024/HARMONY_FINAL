@@ -321,29 +321,6 @@ void loop()
     content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
     content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
 
-    String RTC_Timestamp = RTCDS3231.getTimestamp();
-    content.set("fields/myTimestamp/timestampValue", RTC_Timestamp);
-
-    // boolean
-    content.set("fields/isOnline/booleanValue", true);
-
-    // integer
-    content.set("fields/sampleSensor2/integerValue", String(random(500, 1000)));
-
-    // null
-    content.set("fields/myNull/nullValue");
-
-    String doc_path = "projects/";
-    doc_path += FIREBASE_PROJECT_ID;
-    doc_path += "/databases/(default)/documents/coll_id/doc_id"; // coll_id and doc_id are your collection id and document id
-
-    // reference
-    content.set("fields/myRef/referenceValue", doc_path.c_str());
-
-    // timestamp
-    String RTCtime = RTCDS3231.getTimestamp();
-    content.set("fields/myTimestamp/timestampValue", RTCtime); // RFC3339 UTC "Zulu" format
-
     if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
     {
       // Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
@@ -501,17 +478,17 @@ void Read_ESP32B_PZEM_C()
     SensorData.PZEM_C_Frequency = receivedData.substring(commaIndex4 + 1, commaIndex5).toFloat();
     SensorData.PZEM_C_PowerFactor = receivedData.substring(commaIndex5 + 1).toFloat();
 
-    Serial.print("Received PZEM_C Voltage: ");
-    Serial.println(SensorData.PZEM_C_Voltage);
-    Serial.print("Received PZEM_C Current: ");
-    Serial.println(SensorData.PZEM_C_Current);
-    Serial.print("Received PZEM_C Power: ");
-    Serial.println(SensorData.PZEM_C_Power);
-    Serial.print("Received PZEM_C Energy: ");
-    Serial.println(SensorData.PZEM_C_Energy);
-    Serial.print("Received PZEM_C Frequency: ");
-    Serial.println(SensorData.PZEM_C_Frequency);
-    Serial.print("Received PZEM_C PowerFactor: ");
-    Serial.println(SensorData.PZEM_C_PowerFactor);
+    // Serial.print("Received PZEM_C Voltage: ");
+    // Serial.println(SensorData.PZEM_C_Voltage);
+    // Serial.print("Received PZEM_C Current: ");
+    // Serial.println(SensorData.PZEM_C_Current);
+    // Serial.print("Received PZEM_C Power: ");
+    // Serial.println(SensorData.PZEM_C_Power);
+    // Serial.print("Received PZEM_C Energy: ");
+    // Serial.println(SensorData.PZEM_C_Energy);
+    // Serial.print("Received PZEM_C Frequency: ");
+    // Serial.println(SensorData.PZEM_C_Frequency);
+    // Serial.print("Received PZEM_C PowerFactor: ");
+    // Serial.println(SensorData.PZEM_C_PowerFactor);
   }
 }
