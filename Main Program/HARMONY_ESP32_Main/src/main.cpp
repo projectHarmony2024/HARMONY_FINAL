@@ -74,6 +74,25 @@ PZEM004Tv30 PZEM1(&Serial, PZEM_A_RX_PIN, PZEM_A_TX_PIN);
 #define PZEM_B_TX_PIN 17
 PZEM004Tv30 PZEM2(&Serial1, PZEM_B_RX_PIN, PZEM_B_TX_PIN);
 
+// WIFI AND FIREBASE
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include <addons/TokenHelper.h>
+
+#define WIFI_SSID "SB BALIBAGO"
+#define WIFI_PASSWORD "KAPASIYAHAN1117"
+
+#define API_KEY "AIzaSyDF1f5EeF6cIsldc6FnyspmIgFFOLojwKk"
+
+#define FIREBASE_PROJECT_ID "harmony-testing-c67ff"
+
+#define USER_EMAIL "projectharmonyesp@gmail.com"
+#define USER_PASSWORD "projectHarmony_ESP32"
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
 // MOVING AVERAGE FILTER
 #include <MovingAverageFilter.h>
 enum SensorChannel
@@ -165,6 +184,28 @@ void setup()
   SolarACS.begin();
   WindACS.begin();
   BatteryVoltage.setBatteryVoltageRange(BattMinVolt, BattMaxVolt);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(50);
+  }
+
+  config.api_key = API_KEY;
+
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  config.token_status_callback = tokenStatusCallback;
+
+  Firebase.reconnectNetwork(true);
+
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+  fbdo.setResponseSize(2048);
+
+  Firebase.begin(&config, &auth);
 }
 /* ========== END OF SETUP ========== */
 
@@ -244,6 +285,74 @@ void loop()
 
     // DisplayReadings();
   }
+
+  // SEND TO FIREBASE FOR EVERY 1 minute
+  if (Firebase.ready() && (currentMillis - previousMillis >= 60000))
+  {
+    previousMillis = currentMillis;
+
+    FirebaseJson content;
+    String documentPath = "HARMONY_SENSORS/";
+    documentPath += RTCDS3231.getDateTime();
+
+    // double
+    content.set("fields/Solar_Voltage/doubleValue", String(double(SensorData.Solar_Voltage)));
+    content.set("fields/Solar_Current/doubleValue", String(double(SensorData.Solar_Current)));
+    content.set("fields/Solar_Power/doubleValue", String(double(SensorData.Solar_Current * SensorData.Solar_Voltage)));
+
+    content.set("fields/Wind_Voltage/doubleValue", String(double(SensorData.Wind_Voltage)));
+    content.set("fields/Wind_Current/doubleValue", String(double(SensorData.Wind_Current)));
+    content.set("fields/Wind_Power/doubleValue", String(double(SensorData.Wind_Current * SensorData.Wind_Voltage)));
+    content.set("fields/Wind_Speed/doubleValue", String(double(SensorData.WindSpeed_kph)));
+    content.set("fields/Wind_Direction/integerValue", String(SensorData.Wind_Direction));
+
+    content.set("fields/Battery_Voltage/doubleValue", String(double(SensorData.Battery_Voltage)));
+    content.set("fields/Battery_Percentage/doubleValue", String(double(SensorData.Battery_Percentage)));
+
+    content.set("fields/BarangayHall_Power/doubleValue", String(double(SensorData.PZEM_A_Power)));
+    content.set("fields/BarangayHall_Energy/doubleValue", String(double(SensorData.PZEM_A_Energy)));
+    content.set("fields/BarangayHall_PowerFactor/doubleValue", String(double(SensorData.PZEM_A_PowerFactor)));
+
+    content.set("fields/HealthCenter_Power/doubleValue", String(double(SensorData.PZEM_B_Power)));
+    content.set("fields/HealthCenter_Energy/doubleValue", String(double(SensorData.PZEM_B_Energy)));
+    content.set("fields/HealthCenter_PowerFactor/doubleValue", String(double(SensorData.PZEM_B_PowerFactor)));
+
+    content.set("fields/Daycare_Power/doubleValue", String(double(SensorData.PZEM_C_Power)));
+    content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
+    content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
+
+    String RTC_Timestamp = RTCDS3231.getTimestamp();
+    content.set("fields/myTimestamp/timestampValue", RTC_Timestamp);
+
+    // boolean
+    content.set("fields/isOnline/booleanValue", true);
+
+    // integer
+    content.set("fields/sampleSensor2/integerValue", String(random(500, 1000)));
+
+    // null
+    content.set("fields/myNull/nullValue");
+
+    String doc_path = "projects/";
+    doc_path += FIREBASE_PROJECT_ID;
+    doc_path += "/databases/(default)/documents/coll_id/doc_id"; // coll_id and doc_id are your collection id and document id
+
+    // reference
+    content.set("fields/myRef/referenceValue", doc_path.c_str());
+
+    // timestamp
+    String RTCtime = RTCDS3231.getTimestamp();
+    content.set("fields/myTimestamp/timestampValue", RTCtime); // RFC3339 UTC "Zulu" format
+
+    if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
+    {
+      // Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+    }
+    else
+    {
+      // Serial.println(fbdo.errorReason());
+    }
+  }
 }
 /* ========== END OF LOOP ========== */
 
@@ -251,7 +360,7 @@ void loop()
 void SensorReadings()
 {
   // RAW READINGS
-#define SAMPLEDATA 1
+#define SAMPLEDATA 0
 #if SAMPLEDATA == 1
   static float Solar_Voltage = SolarVoltage.readVoltage();
   static float Solar_Current = SolarACS.readCurrent();

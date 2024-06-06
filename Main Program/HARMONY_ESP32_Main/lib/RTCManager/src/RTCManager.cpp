@@ -42,7 +42,7 @@ String RTCManager::getDateTime()
 String RTCManager::getTimestamp()
 {
     DateTime now = rtc.now() + TimeSpan(0, timeZoneOffset, 0, 0);
-    return formatDate(now, "YYYY:DD:MM") + formatTime(now, "HH:MM") + formatTimeZoneOffset();
+    return formatDate(now, "YYYY:DD:MM") + "T" + formatTime(now, "HH:MM") + formatTimeZoneOffset();
 }
 
 String RTCManager::formatTime(DateTime now, String format)
