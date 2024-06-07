@@ -11,6 +11,7 @@
 ▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌
 =======================================================================================================*/
 
+#include <SPI.h>
 #include <Arduino.h>
 
 /* ========== CONFIGURATION ========== */
@@ -35,12 +36,12 @@ UltrasonicAnemometer Anemometer(RO, DI, DE, RE, MAX485_Vcc);
 #include <VoltageDivider.h>
 // Solar
 #define SolarVoltage_pin 35
-#define Solar_R1 200000.0
-#define Solar_R2 10000.0
+#define Solar_R1 225000.0
+#define Solar_R2 9960.0
 // Wind
 #define WindVoltage_pin 32
-#define Wind_R1 200000.0
-#define Wind_R2 10000.0
+#define Wind_R1 224000.0
+#define Wind_R2 9860.0
 // Battery
 #define BatteryVoltage_pin 36
 #define Battery_R1 200000.0

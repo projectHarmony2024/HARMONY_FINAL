@@ -16,36 +16,35 @@
 /* ========== CONFIGURATION ========== */
 // ESP-A
 #define ESP_A_init() Serial2.begin(115200, SERIAL_8N1, 14, 12)
-#define SendTo_ESP_A(...) Serial2.printf(__VA_ARGS__)
 
 // ESP-C
-#define ESP_C_init() Serial1.begin(115200, SERIAL_8N1, 26, 25)
+#define ESP_C_init() Serial1.begin(115200, SERIAL_8N1, 32, 33)
 #define SendTo_ESP_C(...) Serial1.printf(__VA_ARGS__)
 
 // PZEM-C
 #include <PZEM004Tv30.h>
-#define PZEM_C_RX_PIN 32
-#define PZEM_C_TX_PIN 35
-PZEM004Tv30 PZEM3(&Serial, PZEM_C_RX_PIN, PZEM_C_TX_PIN);
+#define PZEM_C_RX_PIN 35
+#define PZEM_C_TX_PIN 34
+PZEM004Tv30 PZEM3(Serial, PZEM_C_RX_PIN, PZEM_C_TX_PIN);
 
 // WIFI AND FIREBASE
 #include <WiFi.h>
-#include <Firebase_ESP_Client.h>
-#include <addons/TokenHelper.h>
+// #include <Firebase_ESP_Client.h>
+// #include <addons/TokenHelper.h>
 
 #define WIFI_SSID "SB BALIBAGO"
 #define WIFI_PASSWORD "KAPASIYAHAN1117"
 
-#define API_KEY "AIzaSyDF1f5EeF6cIsldc6FnyspmIgFFOLojwKk"
+// #define API_KEY "AIzaSyDF1f5EeF6cIsldc6FnyspmIgFFOLojwKk"
 
-#define FIREBASE_PROJECT_ID "harmony-testing-c67ff"
+// #define FIREBASE_PROJECT_ID "harmony-testing-c67ff"
 
-#define USER_EMAIL "projectharmonyesp@gmail.com"
-#define USER_PASSWORD "projectHarmony_ESP32"
+// #define USER_EMAIL "projectharmonyesp@gmail.com"
+// #define USER_PASSWORD "projectHarmony_ESP32"
 
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
+// FirebaseData fbdo;
+// FirebaseAuth auth;
+// FirebaseConfig config;
 
 // MOVING AVERAGE FILTER
 #include <MovingAverageFilter.h>
@@ -118,23 +117,24 @@ void setup()
 
     while (WiFi.status() != WL_CONNECTED)
     {
+        Serial.print(".");
         delay(50);
     }
 
-    config.api_key = API_KEY;
+    // config.api_key = API_KEY;
 
-    auth.user.email = USER_EMAIL;
-    auth.user.password = USER_PASSWORD;
+    // auth.user.email = USER_EMAIL;
+    // auth.user.password = USER_PASSWORD;
 
-    config.token_status_callback = tokenStatusCallback;
+    // config.token_status_callback = tokenStatusCallback;
 
-    Firebase.reconnectNetwork(true);
+    // Firebase.reconnectNetwork(true);
 
-    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+    // fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
-    fbdo.setResponseSize(2048);
+    // fbdo.setResponseSize(2048);
 
-    Firebase.begin(&config, &auth);
+    // Firebase.begin(&config, &auth);
 }
 
 ulong previousMillis = 0;
@@ -143,15 +143,6 @@ void loop()
 {
     // Read PZEM_C
     SensorReadings();
-
-    // Send to ESP-A:Main
-    SendTo_ESP_A("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
-                 SensorData.PZEM_C_Voltage,
-                 SensorData.PZEM_C_Current,
-                 SensorData.PZEM_C_Power,
-                 SensorData.PZEM_C_Energy,
-                 SensorData.PZEM_C_Frequency,
-                 SensorData.PZEM_C_PowerFactor);
 
     // Read ESP_A SensorReadings
     Read_ESP_A();
@@ -190,49 +181,50 @@ void loop()
 
     ulong currentMillis = millis();
 
-    // SEND TO FIREBASE FOR EVERY 1 minute
-    if (Firebase.ready() && (currentMillis - previousMillis >= 60000))
-    {
-        previousMillis = currentMillis;
+    // // SEND TO FIREBASE FOR EVERY 1 minute
+    // if (Firebase.ready() && (currentMillis - previousMillis >= 60000))
+    // {
+    //     previousMillis = currentMillis;
 
-        FirebaseJson content;
-        String documentPath = "HARMONY_SENSORS/";
-        documentPath += SensorData.RTC_Timestamp;
+    //     FirebaseJson content;
+    //     String documentPath = "HARMONY_SENSORS/";
+    //     documentPath += SensorData.RTC_Timestamp;
 
-        content.set("fields/Solar_Voltage/doubleValue", String(double(SensorData.Solar_Voltage)));
-        content.set("fields/Solar_Current/doubleValue", String(double(SensorData.Solar_Current)));
-        content.set("fields/Solar_Power/doubleValue", String(double(SensorData.Solar_Current * SensorData.Solar_Voltage)));
+    //     content.set("fields/Solar_Voltage/doubleValue", String(double(SensorData.Solar_Voltage)));
+    //     content.set("fields/Solar_Current/doubleValue", String(double(SensorData.Solar_Current)));
+    //     content.set("fields/Solar_Power/doubleValue", String(double(SensorData.Solar_Current * SensorData.Solar_Voltage)));
 
-        content.set("fields/Wind_Voltage/doubleValue", String(double(SensorData.Wind_Voltage)));
-        content.set("fields/Wind_Current/doubleValue", String(double(SensorData.Wind_Current)));
-        content.set("fields/Wind_Power/doubleValue", String(double(SensorData.Wind_Current * SensorData.Wind_Voltage)));
-        content.set("fields/Wind_Speed/doubleValue", String(double(SensorData.WindSpeed_kph)));
-        content.set("fields/Wind_Direction/integerValue", String(SensorData.Wind_Direction));
+    //     content.set("fields/Wind_Voltage/doubleValue", String(double(SensorData.Wind_Voltage)));
+    //     content.set("fields/Wind_Current/doubleValue", String(double(SensorData.Wind_Current)));
+    //     content.set("fields/Wind_Power/doubleValue", String(double(SensorData.Wind_Current * SensorData.Wind_Voltage)));
+    //     content.set("fields/Wind_Speed/doubleValue", String(double(SensorData.WindSpeed_kph)));
+    //     content.set("fields/Wind_Direction/integerValue", String(SensorData.Wind_Direction));
 
-        content.set("fields/Battery_Voltage/doubleValue", String(double(SensorData.Battery_Voltage)));
-        content.set("fields/Battery_Percentage/integerValue", String(SensorData.Battery_Percentage));
+    //     content.set("fields/Battery_Voltage/doubleValue", String(double(SensorData.Battery_Voltage)));
+    //     content.set("fields/Battery_Percentage/integerValue", String(SensorData.Battery_Percentage));
 
-        content.set("fields/BarangayHall_Power/doubleValue", String(double(SensorData.PZEM_A_Power)));
-        content.set("fields/BarangayHall_Energy/doubleValue", String(double(SensorData.PZEM_A_Energy)));
-        content.set("fields/BarangayHall_PowerFactor/doubleValue", String(double(SensorData.PZEM_A_PowerFactor)));
+    //     content.set("fields/BarangayHall_Power/doubleValue", String(double(SensorData.PZEM_A_Power)));
+    //     content.set("fields/BarangayHall_Energy/doubleValue", String(double(SensorData.PZEM_A_Energy)));
+    //     content.set("fields/BarangayHall_PowerFactor/doubleValue", String(double(SensorData.PZEM_A_PowerFactor)));
 
-        content.set("fields/HealthCenter_Power/doubleValue", String(double(SensorData.PZEM_B_Power)));
-        content.set("fields/HealthCenter_Energy/doubleValue", String(double(SensorData.PZEM_B_Energy)));
-        content.set("fields/HealthCenter_PowerFactor/doubleValue", String(double(SensorData.PZEM_B_PowerFactor)));
+    //     content.set("fields/HealthCenter_Power/doubleValue", String(double(SensorData.PZEM_B_Power)));
+    //     content.set("fields/HealthCenter_Energy/doubleValue", String(double(SensorData.PZEM_B_Energy)));
+    //     content.set("fields/HealthCenter_PowerFactor/doubleValue", String(double(SensorData.PZEM_B_PowerFactor)));
 
-        content.set("fields/Daycare_Power/doubleValue", String(double(SensorData.PZEM_C_Power)));
-        content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
-        content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
+    //     content.set("fields/Daycare_Power/doubleValue", String(double(SensorData.PZEM_C_Power)));
+    //     content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
+    //     content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
 
-        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
-        {
-            Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
-        }
-        else
-        {
-            Serial.println(fbdo.errorReason());
-        }
-    }
+    //     if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
+    //     {
+    //         // Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+    //     }
+    //     else
+    //     {
+    //         // Serial.println(fbdo.errorReason());
+    //     }
+    // }
+    // DisplayResult();
 }
 
 /* ========== SENSOR READINGS ========== */
@@ -274,26 +266,6 @@ void SensorReadings()
 #endif
 }
 /* ========== END OF SENSOR READINGS ========== */
-
-void SendToESP_A(const char *format, ...)
-{
-    char buffer[256]; // Buffer to hold the formatted string
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-    Serial2.printf(buffer);
-
-    /* This is similar to this function but more clarity
-            Serial2.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
-                       SensorData.PZEM_C_Voltage,
-                       SensorData.PZEM_C_Current,
-                       SensorData.PZEM_C_Power,
-                       SensorData.PZEM_C_Energy,
-                       SensorData.PZEM_C_Frequency,
-                       SensorData.PZEM_C_PowerFactor);
-    */
-}
 
 void Read_ESP_A()
 {
