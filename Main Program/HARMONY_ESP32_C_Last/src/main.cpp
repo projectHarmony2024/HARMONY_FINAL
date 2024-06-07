@@ -110,6 +110,10 @@ void loop()
                 SensorData.RTC_Date,
                 SensorData.RTC_Time);
   }
+
+  // Create a function to send SMS 
+  // Low Batt = 20%
+  // High power consumption:
 }
 
 void Read_ESP_B()

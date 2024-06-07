@@ -34,15 +34,15 @@ UltrasonicAnemometer Anemometer(RO, DI, DE, RE, MAX485_Vcc);
 // VOLTAGE SENSOR
 #include <VoltageDivider.h>
 // Solar
-#define SolarVoltage_pin -1
+#define SolarVoltage_pin 35
 #define Solar_R1 200000.0
 #define Solar_R2 10000.0
 // Wind
-#define WindVoltage_pin 13
+#define WindVoltage_pin 32
 #define Wind_R1 200000.0
 #define Wind_R2 10000.0
 // Battery
-#define BatteryVoltage_pin -1
+#define BatteryVoltage_pin 36
 #define Battery_R1 200000.0
 #define Battery_R2 10000.0
 #define BattMinVolt 10.5
@@ -56,8 +56,8 @@ VoltageDivider BatteryVoltage(BatteryVoltage_pin, Battery_R1, Battery_R2, ADC_Re
 
 // ACS712-20A CURRENT SENSOR
 #include <CurrentSensor.h>
-#define SolarACSpin -1
-#define WindACSpin -1
+#define SolarACSpin 39
+#define WindACSpin 34
 #define ADC_Res 4095
 #define V_Ref 3.3
 #define MV_PER_AMP 100
@@ -73,25 +73,6 @@ PZEM004Tv30 PZEM1(&Serial, PZEM_A_RX_PIN, PZEM_A_TX_PIN);
 #define PZEM_B_RX_PIN 16
 #define PZEM_B_TX_PIN 17
 PZEM004Tv30 PZEM2(&Serial1, PZEM_B_RX_PIN, PZEM_B_TX_PIN);
-
-// WIFI AND FIREBASE
-#include <WiFi.h>
-#include <Firebase_ESP_Client.h>
-#include <addons/TokenHelper.h>
-
-#define WIFI_SSID "SB BALIBAGO"
-#define WIFI_PASSWORD "KAPASIYAHAN1117"
-
-#define API_KEY "AIzaSyDF1f5EeF6cIsldc6FnyspmIgFFOLojwKk"
-
-#define FIREBASE_PROJECT_ID "harmony-testing-c67ff"
-
-#define USER_EMAIL "projectharmonyesp@gmail.com"
-#define USER_PASSWORD "projectHarmony_ESP32"
-
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
 
 // MOVING AVERAGE FILTER
 #include <MovingAverageFilter.h>
@@ -184,28 +165,6 @@ void setup()
   SolarACS.begin();
   WindACS.begin();
   BatteryVoltage.setBatteryVoltageRange(BattMinVolt, BattMaxVolt);
-
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(50);
-  }
-
-  config.api_key = API_KEY;
-
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
-
-  config.token_status_callback = tokenStatusCallback;
-
-  Firebase.reconnectNetwork(true);
-
-  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
-
-  fbdo.setResponseSize(2048);
-
-  Firebase.begin(&config, &auth);
 }
 /* ========== END OF SETUP ========== */
 
@@ -258,7 +217,7 @@ void loop()
     }
 
     // Send other data to ESP-B
-    SendTo_ESP_B("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s\n",
+    SendTo_ESP_B("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s,%s\n",
                  SensorData.Solar_Voltage,
                  SensorData.Solar_Current,
                  SensorData.Wind_Voltage,
@@ -281,54 +240,10 @@ void loop()
                  SensorData.PZEM_B_Frequency,
                  SensorData.PZEM_B_PowerFactor,
                  SensorData.RTC_Date,
-                 SensorData.RTC_Time);
+                 SensorData.RTC_Time,
+                 SensorData.RTC_Timestamp);
 
     // DisplayReadings();
-  }
-
-  // SEND TO FIREBASE FOR EVERY 1 minute
-  if (Firebase.ready() && (currentMillis - previousMillis >= 60000))
-  {
-    previousMillis = currentMillis;
-
-    FirebaseJson content;
-    String documentPath = "HARMONY_SENSORS/";
-    documentPath += RTCDS3231.getDateTime();
-
-    // double
-    content.set("fields/Solar_Voltage/doubleValue", String(double(SensorData.Solar_Voltage)));
-    content.set("fields/Solar_Current/doubleValue", String(double(SensorData.Solar_Current)));
-    content.set("fields/Solar_Power/doubleValue", String(double(SensorData.Solar_Current * SensorData.Solar_Voltage)));
-
-    content.set("fields/Wind_Voltage/doubleValue", String(double(SensorData.Wind_Voltage)));
-    content.set("fields/Wind_Current/doubleValue", String(double(SensorData.Wind_Current)));
-    content.set("fields/Wind_Power/doubleValue", String(double(SensorData.Wind_Current * SensorData.Wind_Voltage)));
-    content.set("fields/Wind_Speed/doubleValue", String(double(SensorData.WindSpeed_kph)));
-    content.set("fields/Wind_Direction/integerValue", String(SensorData.Wind_Direction));
-
-    content.set("fields/Battery_Voltage/doubleValue", String(double(SensorData.Battery_Voltage)));
-    content.set("fields/Battery_Percentage/doubleValue", String(double(SensorData.Battery_Percentage)));
-
-    content.set("fields/BarangayHall_Power/doubleValue", String(double(SensorData.PZEM_A_Power)));
-    content.set("fields/BarangayHall_Energy/doubleValue", String(double(SensorData.PZEM_A_Energy)));
-    content.set("fields/BarangayHall_PowerFactor/doubleValue", String(double(SensorData.PZEM_A_PowerFactor)));
-
-    content.set("fields/HealthCenter_Power/doubleValue", String(double(SensorData.PZEM_B_Power)));
-    content.set("fields/HealthCenter_Energy/doubleValue", String(double(SensorData.PZEM_B_Energy)));
-    content.set("fields/HealthCenter_PowerFactor/doubleValue", String(double(SensorData.PZEM_B_PowerFactor)));
-
-    content.set("fields/Daycare_Power/doubleValue", String(double(SensorData.PZEM_C_Power)));
-    content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
-    content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
-
-    if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
-    {
-      // Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
-    }
-    else
-    {
-      // Serial.println(fbdo.errorReason());
-    }
   }
 }
 /* ========== END OF LOOP ========== */
@@ -447,6 +362,7 @@ void SensorReadings()
 /* ========== END OF SENSOR READINGS ========== */
 
 /* ========== DISPLAY READINGS ========== */
+// For Debugging Only
 void DisplayReadings()
 {
   Serial.println("\n=== SOLAR ===");

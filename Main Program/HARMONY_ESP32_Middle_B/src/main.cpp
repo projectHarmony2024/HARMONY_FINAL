@@ -22,10 +22,30 @@
 #define ESP_C_init() Serial1.begin(115200, SERIAL_8N1, 26, 25)
 #define SendTo_ESP_C(...) Serial1.printf(__VA_ARGS__)
 
+// PZEM-C
 #include <PZEM004Tv30.h>
 #define PZEM_C_RX_PIN 32
 #define PZEM_C_TX_PIN 35
 PZEM004Tv30 PZEM3(&Serial, PZEM_C_RX_PIN, PZEM_C_TX_PIN);
+
+// WIFI AND FIREBASE
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include <addons/TokenHelper.h>
+
+#define WIFI_SSID "SB BALIBAGO"
+#define WIFI_PASSWORD "KAPASIYAHAN1117"
+
+#define API_KEY "AIzaSyDF1f5EeF6cIsldc6FnyspmIgFFOLojwKk"
+
+#define FIREBASE_PROJECT_ID "harmony-testing-c67ff"
+
+#define USER_EMAIL "projectharmonyesp@gmail.com"
+#define USER_PASSWORD "projectHarmony_ESP32"
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
 
 // MOVING AVERAGE FILTER
 #include <MovingAverageFilter.h>
@@ -74,6 +94,7 @@ struct SmoothedSensorReadings
     float PZEM_C_PowerFactor;
     String RTC_Date;
     String RTC_Time;
+    String RTC_Timestamp;
 };
 SmoothedSensorReadings SensorData;
 
@@ -92,62 +113,125 @@ void setup()
 
     ESP_A_init();
     ESP_C_init();
+
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(50);
+    }
+
+    config.api_key = API_KEY;
+
+    auth.user.email = USER_EMAIL;
+    auth.user.password = USER_PASSWORD;
+
+    config.token_status_callback = tokenStatusCallback;
+
+    Firebase.reconnectNetwork(true);
+
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+    fbdo.setResponseSize(2048);
+
+    Firebase.begin(&config, &auth);
 }
 
-uint32_t prev_time = 0;
+ulong previousMillis = 0;
 
 void loop()
 {
     // Read PZEM_C
     SensorReadings();
 
+    // Send to ESP-A:Main
+    SendTo_ESP_A("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
+                 SensorData.PZEM_C_Voltage,
+                 SensorData.PZEM_C_Current,
+                 SensorData.PZEM_C_Power,
+                 SensorData.PZEM_C_Energy,
+                 SensorData.PZEM_C_Frequency,
+                 SensorData.PZEM_C_PowerFactor);
+
     // Read ESP_A SensorReadings
     Read_ESP_A();
 
-    uint32_t current_time = millis();
-    if (current_time - prev_time >= 1000)
+    // Send to ESP-C
+    SendTo_ESP_C("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s\n",
+                 SensorData.Solar_Voltage,
+                 SensorData.Solar_Current,
+                 SensorData.Wind_Voltage,
+                 SensorData.Wind_Current,
+                 SensorData.WindSpeed_ms,
+                 SensorData.WindSpeed_kph,
+                 SensorData.Wind_Direction,
+                 SensorData.Battery_Voltage,
+                 SensorData.Battery_Percentage,
+                 SensorData.PZEM_A_Voltage,
+                 SensorData.PZEM_A_Current,
+                 SensorData.PZEM_A_Power,
+                 SensorData.PZEM_A_Energy,
+                 SensorData.PZEM_A_Frequency,
+                 SensorData.PZEM_A_PowerFactor,
+                 SensorData.PZEM_B_Voltage,
+                 SensorData.PZEM_B_Current,
+                 SensorData.PZEM_B_Power,
+                 SensorData.PZEM_B_Energy,
+                 SensorData.PZEM_B_Frequency,
+                 SensorData.PZEM_B_PowerFactor,
+                 SensorData.PZEM_C_Voltage,
+                 SensorData.PZEM_C_Current,
+                 SensorData.PZEM_C_Power,
+                 SensorData.PZEM_C_Energy,
+                 SensorData.PZEM_C_Frequency,
+                 SensorData.PZEM_C_PowerFactor,
+                 SensorData.RTC_Date,
+                 SensorData.RTC_Time);
+
+    ulong currentMillis = millis();
+
+    // SEND TO FIREBASE FOR EVERY 1 minute
+    if (Firebase.ready() && (currentMillis - previousMillis >= 60000))
     {
-        prev_time = current_time;
+        previousMillis = currentMillis;
 
-        // Send to ESP-A:Main
-        SendTo_ESP_A("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
-                     SensorData.PZEM_C_Voltage,
-                     SensorData.PZEM_C_Current,
-                     SensorData.PZEM_C_Power,
-                     SensorData.PZEM_C_Energy,
-                     SensorData.PZEM_C_Frequency,
-                     SensorData.PZEM_C_PowerFactor);
+        FirebaseJson content;
+        String documentPath = "HARMONY_SENSORS/";
+        documentPath += SensorData.RTC_Timestamp;
 
-        SendTo_ESP_C("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s\n",
-                     SensorData.Solar_Voltage,
-                     SensorData.Solar_Current,
-                     SensorData.Wind_Voltage,
-                     SensorData.Wind_Current,
-                     SensorData.WindSpeed_ms,
-                     SensorData.WindSpeed_kph,
-                     SensorData.Wind_Direction,
-                     SensorData.Battery_Voltage,
-                     SensorData.Battery_Percentage,
-                     SensorData.PZEM_A_Voltage,
-                     SensorData.PZEM_A_Current,
-                     SensorData.PZEM_A_Power,
-                     SensorData.PZEM_A_Energy,
-                     SensorData.PZEM_A_Frequency,
-                     SensorData.PZEM_A_PowerFactor,
-                     SensorData.PZEM_B_Voltage,
-                     SensorData.PZEM_B_Current,
-                     SensorData.PZEM_B_Power,
-                     SensorData.PZEM_B_Energy,
-                     SensorData.PZEM_B_Frequency,
-                     SensorData.PZEM_B_PowerFactor,
-                     SensorData.PZEM_C_Voltage,
-                     SensorData.PZEM_C_Current,
-                     SensorData.PZEM_C_Power,
-                     SensorData.PZEM_C_Energy,
-                     SensorData.PZEM_C_Frequency,
-                     SensorData.PZEM_C_PowerFactor,
-                     SensorData.RTC_Date,
-                     SensorData.RTC_Time);
+        content.set("fields/Solar_Voltage/doubleValue", String(double(SensorData.Solar_Voltage)));
+        content.set("fields/Solar_Current/doubleValue", String(double(SensorData.Solar_Current)));
+        content.set("fields/Solar_Power/doubleValue", String(double(SensorData.Solar_Current * SensorData.Solar_Voltage)));
+
+        content.set("fields/Wind_Voltage/doubleValue", String(double(SensorData.Wind_Voltage)));
+        content.set("fields/Wind_Current/doubleValue", String(double(SensorData.Wind_Current)));
+        content.set("fields/Wind_Power/doubleValue", String(double(SensorData.Wind_Current * SensorData.Wind_Voltage)));
+        content.set("fields/Wind_Speed/doubleValue", String(double(SensorData.WindSpeed_kph)));
+        content.set("fields/Wind_Direction/integerValue", String(SensorData.Wind_Direction));
+
+        content.set("fields/Battery_Voltage/doubleValue", String(double(SensorData.Battery_Voltage)));
+        content.set("fields/Battery_Percentage/integerValue", String(SensorData.Battery_Percentage));
+
+        content.set("fields/BarangayHall_Power/doubleValue", String(double(SensorData.PZEM_A_Power)));
+        content.set("fields/BarangayHall_Energy/doubleValue", String(double(SensorData.PZEM_A_Energy)));
+        content.set("fields/BarangayHall_PowerFactor/doubleValue", String(double(SensorData.PZEM_A_PowerFactor)));
+
+        content.set("fields/HealthCenter_Power/doubleValue", String(double(SensorData.PZEM_B_Power)));
+        content.set("fields/HealthCenter_Energy/doubleValue", String(double(SensorData.PZEM_B_Energy)));
+        content.set("fields/HealthCenter_PowerFactor/doubleValue", String(double(SensorData.PZEM_B_PowerFactor)));
+
+        content.set("fields/Daycare_Power/doubleValue", String(double(SensorData.PZEM_C_Power)));
+        content.set("fields/Daycare_Energy/doubleValue", String(double(SensorData.PZEM_C_Energy)));
+        content.set("fields/Daycare_PowerFactor/doubleValue", String(double(SensorData.PZEM_C_PowerFactor)));
+
+        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw()))
+        {
+            Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+        }
+        else
+        {
+            Serial.println(fbdo.errorReason());
+        }
     }
 }
 
@@ -180,27 +264,13 @@ void SensorReadings()
     SensorData.PZEM_C_Frequency = Filter.getAverage(PZEM_C_FREQUENCY);
     SensorData.PZEM_C_PowerFactor = Filter.getAverage(PZEM_C_POWERFACTOR);
 #else
-    SensorData.Solar_Voltage = random(0, 60);
-    SensorData.Solar_Current = random(0, 60);
-    SensorData.Wind_Voltage = random(0, 60);
-    SensorData.Wind_Current = random(0, 60);
-    SensorData.WindSpeed_ms = random(0, 60);
-    SensorData.WindSpeed_kph = random(0, 60);
-    SensorData.Wind_Direction = random(0, 60);
-    SensorData.Battery_Voltage = random(0, 60);
-    SensorData.Battery_Percentage = random(0, 60);
-    SensorData.PZEM_A_Voltage = random(0, 60);
-    SensorData.PZEM_A_Current = random(0, 60);
-    SensorData.PZEM_A_Power = random(0, 60);
-    SensorData.PZEM_A_Energy = random(0, 60);
-    SensorData.PZEM_A_Frequency = random(0, 60);
-    SensorData.PZEM_A_PowerFactor = random(0, 60);
-    SensorData.PZEM_B_Voltage = random(0, 60);
-    SensorData.PZEM_B_Current = random(0, 60);
-    SensorData.PZEM_B_Power = random(0, 60);
-    SensorData.PZEM_B_Energy = random(0, 60);
-    SensorData.PZEM_B_Frequency = random(0, 60);
-    SensorData.PZEM_B_PowerFactor = random(0, 60);
+    SensorData.PZEM_C_Voltage = random(0, 60);
+    SensorData.PZEM_C_Current = random(0, 60);
+    SensorData.PZEM_C_Power = random(0, 60);
+    SensorData.PZEM_C_Energy = random(0, 60);
+    SensorData.PZEM_C_Frequency = random(0, 60);
+    SensorData.PZEM_C_PowerFactor = random(0, 60);
+
 #endif
 }
 /* ========== END OF SENSOR READINGS ========== */
@@ -314,9 +384,46 @@ void Read_ESP_A()
         startIdx = endIdx + 1;
         endIdx = receivedData.indexOf(',', startIdx);
         SensorData.PZEM_B_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_Current = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_Power = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_Energy = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.PZEM_C_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.RTC_Date = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.RTC_Time = receivedData.substring(startIdx, endIdx).toFloat();
+
+        startIdx = endIdx + 1;
+        endIdx = receivedData.indexOf(',', startIdx);
+        SensorData.RTC_Timestamp = receivedData.substring(startIdx, endIdx).toFloat();
     }
 }
 
+// For Debugging Only
 void DisplayResult()
 {
     Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",

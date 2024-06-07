@@ -332,8 +332,8 @@ void facilityStatus(float totalConsumed)
 void forLabels()
 {
   /* ------------- TIME AND DATE ------------- */
-  lv_label_set_text(ui_headerDate, SensorData.RTC_Date);
-  lv_label_set_text(ui_headerTime, SensorData.RTC_Time);
+  lv_label_set_text(ui_headerDate, String(SensorData.RTC_Date).c_str());
+  lv_label_set_text(ui_headerTime, String(SensorData.RTC_Time).c_str());
 
   /* ------------- SOLAR VALUES ------------- */
   lv_label_set_text(ui_solarVoltage, String(SensorData.Solar_Voltage).c_str());
