@@ -7,11 +7,10 @@
 class UltrasonicAnemometer
 {
 public:
-    // UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin, int max485VCC_Pin);
     UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin);
 
     void begin();
-    int readData(); // Return type: Integer (1/nan)
+    bool readData(); // Changed return type to bool
 
     float getWindSpeed_ms() const;
     float getWindSpeed_kph() const;
@@ -20,7 +19,6 @@ public:
     void setDirectionOffset(int offset);
 
 private:
-    // int roPin, diPin, dePin, rePin, max485VCC_Pin;
     int roPin, diPin, dePin, rePin;
     byte values[9];
     SoftwareSerial ultrasonicAnemometer;

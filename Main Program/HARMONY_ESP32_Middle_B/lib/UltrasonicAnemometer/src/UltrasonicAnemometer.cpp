@@ -2,34 +2,31 @@
 
 const byte anemometerCommand[] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x02, 0xC4, 0x0B};
 
-// UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin, int max485VCC_Pin) : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin), max485VCC_Pin(max485VCC_Pin),
-//                                                                                                             ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
-UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin) : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin),
-                                                                                         ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
+UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin)
+    : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin),
+      ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
 
 void UltrasonicAnemometer::begin()
 {
   ultrasonicAnemometer.begin(4800);
-  // pinMode(max485VCC_Pin, OUTPUT);
   pinMode(rePin, OUTPUT);
   pinMode(dePin, OUTPUT);
-  // digitalWrite(max485VCC_Pin, HIGH);
 }
 
-int UltrasonicAnemometer::readData()
+bool UltrasonicAnemometer::readData() // Changed return type to bool
 {
   synchronize();
   transmitRequest();
   if (receiveResponse())
   {
     parseData();
-    return 1; // Data received and parsed successfully
+    return true; // Data received and parsed successfully
   }
   else
   {
     windSpeedMs = NAN;
     windDirection = NAN;
-    return NAN; // Sensor timeout or incomplete frame
+    return false; // Sensor timeout or incomplete frame
   }
 }
 
@@ -40,17 +37,16 @@ float UltrasonicAnemometer::getWindSpeed_ms() const
 
 float UltrasonicAnemometer::getWindSpeed_kph() const
 {
-  return (windSpeedMs != NAN) ? windSpeedMs * 3.6 : NAN;
+  return (!isnan(windSpeedMs)) ? windSpeedMs * 3.6 : NAN;
 }
 
 int UltrasonicAnemometer::getWind_Direction() const
 {
-  if (windSpeedMs != NAN && windSpeedMs == 0.0f)
+  if (!isnan(windSpeedMs) && windSpeedMs == 0.0f)
   {
-    // Set wind direction to 0 if wind speed is 0
-    return 0;
+    return 0; // Set wind direction to 0 if wind speed is 0
   }
-  else if (windDirection != NAN)
+  else if (!isnan(windDirection))
   {
     int adjustedDirection = windDirection + directionOffset;
     if (adjustedDirection >= 360)
