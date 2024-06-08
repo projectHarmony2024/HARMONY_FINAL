@@ -1,20 +1,16 @@
 {
 	"folders": [
 		{
-			"path": "Main Program/HARMONY_ESP32_Main"
-		},
-		{
+			"name": "HARMONY_ESP32_Middle_B",
 			"path": "Main Program/HARMONY_ESP32_Middle_B"
 		},
 		{
-			"name": "HARMONY_ESP32_C_Last",
-			"path": "Main Program/HARMONY_ESP32_C_Last"
+			"name": "HARMONY_ESP32_Main",
+			"path": "Main Program/HARMONY_ESP32_Main"
 		},
 		{
+			"name": "LVGL-with-working-graph-and values-testing",
 			"path": "Display/LVGL-with-working-graph-and values-testing"
-		},
-		{
-			"path": "Main Program/HARMONY_ESP32"
 		}
 	],
 	"settings": {

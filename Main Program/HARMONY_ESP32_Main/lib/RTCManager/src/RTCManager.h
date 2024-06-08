@@ -14,6 +14,7 @@ public:
     String getDate(String format = "DD:MM:YYYY");
     String getDateTime();
     String getTimestamp();
+    int getTimeInt();
 
 private:
     RTC_DS3231 rtc;

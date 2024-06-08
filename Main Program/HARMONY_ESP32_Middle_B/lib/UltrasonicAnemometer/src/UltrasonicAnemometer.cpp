@@ -2,16 +2,18 @@
 
 const byte anemometerCommand[] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x02, 0xC4, 0x0B};
 
-UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin, int max485VCC_Pin) : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin), max485VCC_Pin(max485VCC_Pin),
-                                                                                                            ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
+// UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin, int max485VCC_Pin) : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin), max485VCC_Pin(max485VCC_Pin),
+//                                                                                                             ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
+UltrasonicAnemometer::UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin) : roPin(roPin), diPin(diPin), dePin(dePin), rePin(rePin),
+                                                                                         ultrasonicAnemometer(roPin, diPin, false), windSpeedMs(NAN), windDirection(-1), directionOffset(0) {}
 
 void UltrasonicAnemometer::begin()
 {
   ultrasonicAnemometer.begin(4800);
-  pinMode(max485VCC_Pin, OUTPUT);
+  // pinMode(max485VCC_Pin, OUTPUT);
   pinMode(rePin, OUTPUT);
   pinMode(dePin, OUTPUT);
-  digitalWrite(max485VCC_Pin, HIGH);
+  // digitalWrite(max485VCC_Pin, HIGH);
 }
 
 int UltrasonicAnemometer::readData()

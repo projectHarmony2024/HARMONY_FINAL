@@ -7,8 +7,8 @@
 #include <PZEM004Tv30.h>
 #include <HardwareSerial.h>  // Include the ESP32 Hardware Serial library
 
-#define TX_PIN 16
-#define RX_PIN 17
+#define TX_PIN 5
+#define RX_PIN 18
 
 PZEM004Tv30 pzem(&Serial2, TX_PIN, RX_PIN);  //HardwareSerial pointer, TX pin, RX pin
 

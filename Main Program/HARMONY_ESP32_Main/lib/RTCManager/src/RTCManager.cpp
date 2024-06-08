@@ -27,6 +27,15 @@ String RTCManager::getTime(String format)
     return formatTime(now, format);
 }
 
+// FOR GETTING TIME AS INT
+int RTCManager::getTimeInt()
+{
+    DateTime now = rtc.now();
+    int adjustedHour = (now.hour() + 4) % 24;
+    int currentTime = adjustedHour * 100 + now.minute();
+    return currentTime;
+}
+
 String RTCManager::getDate(String format)
 {
     DateTime now = rtc.now() + TimeSpan(0, timeZoneOffset, 0, 0);
