@@ -28,10 +28,10 @@ String RTCManager::getTime(String format)
 }
 
 // FOR GETTING TIME AS INT
-int RTCManager::getTimeInt()
+int RTCManager::getTimeInt(int offset)
 {
     DateTime now = rtc.now();
-    int adjustedHour = (now.hour() + 4) % 24;
+    int adjustedHour = (now.hour() + offset) % 24;
     int currentTime = adjustedHour * 100 + now.minute();
     return currentTime;
 }

@@ -21,19 +21,18 @@ uint8_t broadcastAddress[] = {0x30, 0xC9, 0x22, 0x32, 0xB6, 0x14};
 
 // // ULTRASONIC ANEMOMETER
 // #include <UltrasonicAnemometer.h>
-// #define DI 32
-// #define DE 33
-// #define RE 25
-// #define RO 26
-// // #define MAX485_Vcc 33
-// // UltrasonicAnemometer Anemometer(RO, DI, DE, RE, MAX485_Vcc);
+// #define DI 25
+// #define DE 26
+// #define RE 27
+// #define RO 14
+// #define MAX485_Vcc 33
 // UltrasonicAnemometer Anemometer(RO, DI, DE, RE);
 
 // PZEM-C
-#include <PZEM004Tv30.h>
-#define PZEM_C_RX_PIN 23
-#define PZEM_C_TX_PIN 19
-PZEM004Tv30 PZEM3(Serial1, PZEM_C_RX_PIN, PZEM_C_TX_PIN);
+// #include <PZEM004Tv30.h>
+// #define PZEM_C_RX_PIN 23
+// #define PZEM_C_TX_PIN 19
+// PZEM004Tv30 PZEM3(Serial1, PZEM_C_RX_PIN, PZEM_C_TX_PIN);
 
 // MOVING AVERAGE FILTER
 #include <MovingAverageFilter.h>
@@ -60,9 +59,6 @@ struct SmoothedSensorReadings
     float Solar_Current;
     float Wind_Voltage;
     float Wind_Current;
-    // float WindSpeed_ms;
-    // float WindSpeed_kph;
-    // int Wind_Direction;
     float Battery_Voltage;
     int Battery_Percentage;
     float PZEM_A_Voltage;
@@ -77,12 +73,6 @@ struct SmoothedSensorReadings
     float PZEM_B_Energy;
     float PZEM_B_Frequency;
     float PZEM_B_PowerFactor;
-    // float PZEM_C_Voltage;
-    // float PZEM_C_Current;
-    // float PZEM_C_Power;
-    // float PZEM_C_Energy;
-    // float PZEM_C_Frequency;
-    // float PZEM_C_PowerFactor;
     String RTC_Date;
     String RTC_Time;
     String RTC_Timestamp;
@@ -129,19 +119,11 @@ SmoothedSensorReadingsLCD SensorDataLCD;
 
 esp_now_peer_info_t peerInfo;
 
-// callback when data is sent
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
-{
-    // Serial.print("\r\nLast Packet Send Status:\t");
-    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-}
-
 // FUNCTIONS
 void SensorReadings();
 void DisplayResult();
 /* ========== END OF CONFIGURATION ========== */
 
-// callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
 {
     memcpy(&SensorData, incomingData, sizeof(SensorData));
@@ -158,30 +140,20 @@ void setup()
     // Anemometer.begin();
     // Anemometer.setDirectionOffset(195);
 
-    // Set device as a Wi-Fi Station
     WiFi.mode(WIFI_STA);
 
-    // Init ESP-NOW
     if (esp_now_init() != ESP_OK)
     {
         Serial.println("Error initializing ESP-NOW");
         return;
     }
 
-    // Once ESPNow is successfully Init, we will register for recv CB to
-    // get recv packer info
     esp_now_register_recv_cb(OnDataRecv);
 
-    // Once ESPNow is successfully Init, we will register for Send CB to
-    // get the status of Trasnmitted packet
-    esp_now_register_send_cb(OnDataSent);
-
-    // Register peer
     memcpy(peerInfo.peer_addr, broadcastAddress, 6);
     peerInfo.channel = 0;
     peerInfo.encrypt = false;
 
-    // Add peer
     if (esp_now_add_peer(&peerInfo) != ESP_OK)
     {
         Serial.println("Failed to add peer");
@@ -239,16 +211,11 @@ void loop()
 
         // Send message via ESP-NOW
         esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&SensorDataLCD, sizeof(SensorDataLCD));
-
-        // if (result == ESP_OK)
-        // {
-        //     Serial.println("Sent with success");
-        // }
-        // else
-        // {
-        //     Serial.println("Error sending the data");
-        // }
     }
+}
+
+float randomFloat(float minVal, float maxVal) {
+  return minVal + (float)random() / ((float)RAND_MAX / (maxVal - minVal));
 }
 
 /* ========== SENSOR READINGS ========== */
@@ -283,170 +250,49 @@ void SensorReadings()
     // SensorDataLCD.WindSpeed_ms = Anemometer.getWindSpeed_ms();
     // SensorDataLCD.WindSpeed_kph = Anemometer.getWindSpeed_kph();
     // SensorDataLCD.Wind_Direction = Anemometer.getWind_Direction();
-    SensorDataLCD.WindSpeed_ms = random(0,60);
-    SensorDataLCD.WindSpeed_kph = random(0,60);
-    SensorDataLCD.Wind_Direction = random(0,60);
-    SensorDataLCD.PZEM_C_Voltage = random(0, 60);
-    SensorDataLCD.PZEM_C_Current = random(0, 60);
-    SensorDataLCD.PZEM_C_Power = random(0, 60);
-    SensorDataLCD.PZEM_C_Energy = random(0, 60);
-    SensorDataLCD.PZEM_C_Frequency = random(0, 60);
-    SensorDataLCD.PZEM_C_PowerFactor = random(0, 60);
+    // float WindSpeed_ms;
+    // float WindSpeed_kph;
+    // int Wind_Direction;
+
+    // if (!isnan(Anemometer.readData()))
+    // {
+    //     // Anemometer Data successfully read
+    //     WindSpeed_ms = Anemometer.getWindSpeed_ms();
+    //     WindSpeed_kph = Anemometer.getWindSpeed_kph();
+    //     Wind_Direction = Anemometer.getWind_Direction();
+    // }
+    // else
+    // {
+    //     // Handle error: No anemometer data received
+    //     // windSpeed_ms and wind_Direction will be nan
+    //     Serial.printf("Anemometer Error: No data received\n");
+    // }
+
+    // Filter.addReading(WindSpeed_ms, WIND_SPEED_MS);
+    // Filter.addReading(WindSpeed_kph, WIND_SPEED_KPH);
+    // Filter.addReading(Wind_Direction, WIND_DIRECTION);
+
+    // SensorDataLCD.WindSpeed_ms = Filter.getAverage(WIND_SPEED_MS);
+    // SensorDataLCD.WindSpeed_kph = Filter.getAverage(WIND_SPEED_KPH);
+    // SensorDataLCD.Wind_Direction = Filter.getAverage(WIND_DIRECTION);
+
+    SensorDataLCD.WindSpeed_ms = randomFloat(0.0, 10.0);
+    SensorDataLCD.WindSpeed_kph = randomFloat(0.0, 2.0);
+    SensorDataLCD.Wind_Direction = random(0, 10);
+    SensorDataLCD.PZEM_C_Voltage = 0;
+    SensorDataLCD.PZEM_C_Current = 0;
+    SensorDataLCD.PZEM_C_Power = 0;
+    SensorDataLCD.PZEM_C_Energy = 0;
+    SensorDataLCD.PZEM_C_Frequency = 0;
+    SensorDataLCD.PZEM_C_PowerFactor = 0;
 
 #endif
 }
 /* ========== END OF SENSOR READINGS ========== */
 
-// void Read_ESP_A()
-// {
-//     if (Serial2.available())
-//     {
-//         String receivedData = Serial2.readStringUntil('\n');
-
-//         int startIdx = 0;
-//         int endIdx = receivedData.indexOf(',');
-//         SensorData.Solar_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Solar_Current = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Wind_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Wind_Current = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.WindSpeed_ms = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.WindSpeed_kph = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Wind_Direction = receivedData.substring(startIdx, endIdx).toInt();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Battery_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.Battery_Percentage = receivedData.substring(startIdx, endIdx).toInt();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_Current = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_Power = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_Energy = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_A_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_Current = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_Power = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_Energy = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_B_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_Voltage = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_Current = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_Power = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_Energy = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_Frequency = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.PZEM_C_PowerFactor = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.RTC_Date = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.RTC_Time = receivedData.substring(startIdx, endIdx).toFloat();
-
-//         startIdx = endIdx + 1;
-//         endIdx = receivedData.indexOf(',', startIdx);
-//         SensorData.RTC_Timestamp = receivedData.substring(startIdx, endIdx).toFloat();
-//     }
-// }
-
 // For Debugging Only
 void DisplayResult()
 {
-    // Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f\n",
-    //               SensorData.Solar_Voltage,
-    //               SensorData.Solar_Current,
-    //               SensorData.Wind_Voltage,
-    //               SensorData.Wind_Current,
-    //               SensorData.Battery_Voltage,
-    //               SensorData.Battery_Percentage,
-    //               SensorData.PZEM_A_Voltage,
-    //               SensorData.PZEM_A_Current,
-    //               SensorData.PZEM_A_Power,
-    //               SensorData.PZEM_A_Energy,
-    //               SensorData.PZEM_A_Frequency,
-    //               SensorData.PZEM_A_PowerFactor,
-    //               SensorData.PZEM_B_Voltage,
-    //               SensorData.PZEM_B_Current,
-    //               SensorData.PZEM_B_Power,
-    //               SensorData.PZEM_B_Energy,
-    //               SensorData.PZEM_B_Frequency,
-    //               SensorData.PZEM_B_PowerFactor);
     Serial.println("\n=== TIME ===");
     Serial.printf("Date: %s  Time: %s\n", SensorData.RTC_Date.c_str(), SensorData.RTC_Time.c_str());
     Serial.println("=== SOLAR ===");

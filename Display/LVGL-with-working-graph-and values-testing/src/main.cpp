@@ -125,7 +125,7 @@ void loop()
   Solar_Power = SensorDataLCD.Solar_Voltage * SensorDataLCD.Solar_Current;
   Wind_Power = SensorDataLCD.Wind_Voltage * SensorDataLCD.Wind_Current;
 
-  sensorStatus(ui_statusBattVoltage, SENSOR_ERROR);
+  sensorStatus(ui_statusBattVoltage, SENSOR_OK);
   uint32_t current_millis = millis();
 
   if (current_millis - prev_millis >= 1000)
@@ -143,16 +143,20 @@ void loop()
 /* ------------- END OF LOOP -------------*/
 
 /* ------------- BATTERY -------------*/
-int id_time(int current_time){
-    return current_time / 100;
+int id_time(int current_time)
+{
+  return current_time / 100;
 }
 
 void forBatt()
 {
+  chartBattUpdate(90, 0);
+  chartBattUpdate(SensorDataLCD.Battery_Percentage, 1);
+  chartBattUpdate(SensorDataLCD.Battery_Percentage, 2);
   id = id_time(SensorDataLCD.RTC_TimeInt);
   lv_bar_set_value(ui_batteryBar, SensorDataLCD.Battery_Percentage, LV_ANIM_OFF);         // updates battery bar
   lv_label_set_text(ui_batteryPercent, String(SensorDataLCD.Battery_Percentage).c_str()); // updates battery percent label
-  chartBattUpdate(SensorDataLCD.Battery_Percentage, id);                                  // updates battery chart
+  // chartBattUpdate(SensorDataLCD.Battery_Percentage, id);                                  // updates battery chart
 
   // updates chart every hour and resets it every day
   // if (id >= 23)
@@ -168,7 +172,6 @@ void forBatt()
   //   }
   // }
 }
-
 
 /* ------------- END OF BATTERY -------------*/
 
@@ -259,7 +262,7 @@ void forLabels()
   lv_label_set_text(ui_windPower, String(Wind_Power).c_str());
 
   /* ------------- SOLAR & WIND VALUES ------------- */
-  float solarWindVoltage = SensorDataLCD.Solar_Voltage + SensorDataLCD.Solar_Current;
+  float solarWindVoltage = SensorDataLCD.Solar_Voltage + SensorDataLCD.Wind_Voltage;
   float solarWindCurrent = SensorDataLCD.Solar_Current + SensorDataLCD.Wind_Current;
   float solarWindPower = Solar_Power + Wind_Power;
   lv_label_set_text(ui_solarWindVoltage, String(solarWindVoltage).c_str());
@@ -349,4 +352,5 @@ void DisplayResult()
   Serial.printf("PZEM-C: %0.2f , %0.2f , %0.2f , %0.2f , %0.2f , %0.2f \n", SensorDataLCD.PZEM_C_Voltage, SensorDataLCD.PZEM_C_Current, SensorDataLCD.PZEM_C_Power, SensorDataLCD.PZEM_C_Energy, SensorDataLCD.PZEM_C_Frequency, SensorDataLCD.PZEM_C_PowerFactor);
   Serial.printf("Wind Speed: %0.2f  Wind Direction: %d\n", SensorDataLCD.WindSpeed_kph, SensorDataLCD.Wind_Direction);
   Serial.println(SensorDataLCD.RTC_TimeInt);
+  Serial.println(id);
 }

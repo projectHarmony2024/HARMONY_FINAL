@@ -16,7 +16,7 @@ bool debug = true;
 const int R1 = 7500;//we read the voltage acrosst this resistor ()
 const int R2 = 29655;
 
-const int VinPin = 26; // Potentiometer connected to GPIO14
+const int VinPin = 39; // Potentiometer connected to GPIO14
 
 
 // PWM settings
@@ -35,7 +35,7 @@ void setup() {
   Serial.begin(115200);
   // Configure PWM
   ledcSetup(channel, freq, resolution);
-  //calculatResistor(R1, 24);//10000 ohm and 35.0V
+  calculatResistor(R1, 12);//10000 ohm and 35.0V
 
 }
 
