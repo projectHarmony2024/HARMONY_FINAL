@@ -2,7 +2,7 @@
 #define ULTRASONICANEMOMETER_H
 
 #include <SoftwareSerial.h>
-#include <cmath> // For NAN constant
+#include <cmath>
 
 class UltrasonicAnemometer
 {
@@ -10,7 +10,7 @@ public:
     UltrasonicAnemometer(int roPin, int diPin, int dePin, int rePin);
 
     void begin();
-    bool readData(); // Changed return type to bool
+    bool readData();
 
     float getWindSpeed_ms() const;
     float getWindSpeed_kph() const;

@@ -145,11 +145,8 @@ void loop() {
       memset(wind_directions, 0, sizeof(wind_directions));
     }
 
-
-
   } else {
     Serial.println("Sensor timeout or incomplete frame");
     TotalWindSpeed_ms = 0;
   }
-  delay(1000);
 }

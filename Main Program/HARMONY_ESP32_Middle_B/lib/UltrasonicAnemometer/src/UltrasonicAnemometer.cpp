@@ -13,7 +13,7 @@ void UltrasonicAnemometer::begin()
   pinMode(dePin, OUTPUT);
 }
 
-bool UltrasonicAnemometer::readData() // Changed return type to bool
+bool UltrasonicAnemometer::readData()
 {
   synchronize();
   transmitRequest();
