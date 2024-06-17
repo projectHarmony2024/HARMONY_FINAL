@@ -36,30 +36,25 @@ const long sendInterval = 1000 - blink;
 HardwareSerial ESP32_B(1); // UART1 (Serial1) channel
 
 #include <UltrasonicAnemometer.h>
-#define DI 13
-#define DE 12
-#define RE 14
-#define RO 27
+#define DI 21
+#define DE 19
+#define RE 18
+#define RO 5
 #define MAX485 26
 UltrasonicAnemometer Anemometer(RO, DI, DE, RE, MAX485);
 
 #include <VoltageDivider.h>
-#define SolarVoltageSensorPin 13
-#define Solar_R1 220000.0
-#define Solar_R2 10000.0
-#define SolarVoltageFactor (Solar_R1 / Solar_R2) + 1 // Modify this for adjusting the reading precision
-VoltageDivider SolarVoltageSensor(SolarVoltageSensorPin);
-#define BatterySensorPin 27
-#define Battery_R1 220000.0
-#define Battery_R2 10000.0
-#define BatterMinVoltage 10.5
-#define BatteryMaxVoltage 13.8
-#define BatteryVoltageFactor 4.919 // Modify this for adjusting the reading precision
-VoltageDivider BatteryVoltageSensor(BatterySensorPin);
+#define SolarVoltageSensorPin 27
+#define SolarVoltageFactor 13.25
+#define VoltageRef 3.3
+VoltageDivider SolarVoltageSensor(SolarVoltageSensorPin, SolarVoltageFactor, VoltageRef);
+#define BatterySensorPin 14
+#define BatteryVoltageFactor 4.145
+VoltageDivider BatteryVoltageSensor(BatterySensorPin, BatteryVoltageFactor, VoltageRef);
 
 #include <PZEM004Tv30.h>
-#define windPZEM_RX 16
-#define windPZEM_TX 17
+#define windPZEM_RX 17
+#define windPZEM_TX 16
 PZEM004Tv30 PZEM_Wind(&Serial2, windPZEM_TX, windPZEM_RX); // UART2 (Serial2) channel
 
 #include <MovingAverageFilter.h>
@@ -100,11 +95,8 @@ void setup()
   Anemometer.begin();                     // Setup Anemometer
   Anemometer.setWindDirectionOffset(195); // Set Anemometer Direction Offset
 
-  SolarVoltageSensor.begin(Solar_R1, Solar_R2);
-  SolarVoltageSensor.setDivisionFactor(SolarVoltageFactor);
-
-  BatteryVoltageSensor.begin(Battery_R1, Battery_R2);
-  BatteryVoltageSensor.setDivisionFactor(BatteryVoltageFactor);
+  SolarVoltageSensor.begin();
+  BatteryVoltageSensor.begin();
 }
 
 void loop()
@@ -132,7 +124,12 @@ void readSensorsData()
   float WindSpeed_MS = Anemometer.getWindSpeed_ms();
   int WindDirection = Anemometer.getWindDirection();
   float BatteryVoltage = BatteryVoltageSensor.readVoltage();
-  float BatteryPercentage = BatteryVoltageSensor.getPercentage(BatterMinVoltage, BatteryMaxVoltage);
+
+
+  Serial.printf("SOLAR    Voltage: %0.2f, Current: %0.2f\n", SolarVoltage);
+  Serial.printf("WIND     Voltage: %0.2f, Current: %0.2f, Wind Speed: %0.2f m/s, Wind Direction: %d\n", WindVoltage, WindCurrent);
+  Serial.printf("BATTERY  Voltage: %0.2f, Percentage: \n");
+
 
   sensorData.SolarVoltage = SolarVoltageSensorFilter.addReading(SolarVoltage);
   sensorData.WindVoltage = WindVoltageFilter.addReading(WindVoltage);
@@ -141,7 +138,6 @@ void readSensorsData()
   sensorData.WindSpeed_MS = WindSpeedFilter.addReading(WindSpeed_MS);
   sensorData.WindDirection = WindDirectionFilter.addReading(WindDirection);
   sensorData.BatteryVoltage = BatteryVoltageSensorFilter.addReading(BatteryVoltage);
-  sensorData.BatteryPercentage = BatteryPercentage;
 }
 
 void blinkLED()

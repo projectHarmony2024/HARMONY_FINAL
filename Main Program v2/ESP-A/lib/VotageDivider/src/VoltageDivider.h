@@ -1,35 +1,21 @@
-#ifndef VOLTAGEDIVIDER_H
-#define VOLTAGEDIVIDER_H
+#ifndef VOLTAGE_DIVIDER_H
+#define VOLTAGE_DIVIDER_H
 
 #include <Arduino.h>
 
 class VoltageDivider
 {
 public:
-    // Constructor
-    VoltageDivider(int pin);
-
-    // Initialization method
-    void begin(float R1 = 220000.0, float R2 = 10000.0);
-
-    // Method to set voltage division factor manually
-    void setDivisionFactor(float factor);
-
-    // Method to read the input voltage
+    VoltageDivider(int sensorPin, float conversionFactor, float referenceVoltage);
+    void begin();
     float readVoltage();
 
-    // Method to get the percentage based on min and max voltage
-    float getPercentage(float minVoltage, float maxVoltage);
-
 private:
-    int _pin;
-    float _R1;
-    float _R2;
-    float _divisionFactor;
-    bool _customDivisionFactor;
-
-    // Helper method to calculate the division factor
-    float calculateDivisionFactor();
+    int _sensorPin;
+    float _conversionFactor;
+    float _referenceVoltage;
+    float _sensorValue;
+    float _vOut;
 };
 
-#endif // VOLTAGEDIVIDER_H
+#endif

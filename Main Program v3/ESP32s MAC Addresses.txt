@@ -1,0 +1,5 @@
+ESP-A: e8:6b:ea:cf:df:d0
+ESP-B: 08:b6:1f:b9:d7:8c
+ESP-C: fc:b4:67:f1:bf:6c
+ESP-D: 24:dc:c3:43:e0:30
+LVGL : 30:c9:22:32:b6:14
