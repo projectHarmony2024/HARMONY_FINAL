@@ -1,0 +1,41 @@
+{
+	"folders": [
+		{
+			"name": "TEST-A",
+			"path": "Main Program v3/TEST-A"
+		},
+		{
+			"name": "TEST-B",
+			"path": "Main Program v3/TEST-B"
+		},
+		{
+			"name": "TEST-C",
+			"path": "Main Program v3/TEST-C"
+		},
+		{
+			"path": "Main Program v3/TEST-D"
+		},
+		{
+			"path": "Display/LVGL-with-working-graph-and values-testing"
+		},
+		{
+			"name": "ANEMOMETER",
+			"path": "ANEMOMETER"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"optional": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"ratio": "cpp",
+			"system_error": "cpp",
+			"array": "cpp",
+			"functional": "cpp",
+			"tuple": "cpp",
+			"type_traits": "cpp",
+			"utility": "cpp",
+			"cmath": "cpp"
+		}
+	}
+}

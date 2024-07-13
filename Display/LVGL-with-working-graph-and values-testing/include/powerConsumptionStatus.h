@@ -29,16 +29,10 @@ std::map<PowerConsumptionState, PowerStatusData> powerStatusMap = {
 void powerConsumptionStatus(lv_obj_t *ui_object, PowerConsumptionState powerState)
 {
     const auto &statusData = powerStatusMap[powerState];
-
     if (ui_object != nullptr)
     {
 
         lv_label_set_text(ui_object, statusData.text);
         lv_obj_set_style_text_color(ui_object, lv_color_hex(statusData.color), LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
-
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        smartdisplay_led_set_rgb(statusData.rgb[0], statusData.rgb[1], statusData.rgb[2]);
     }
 }

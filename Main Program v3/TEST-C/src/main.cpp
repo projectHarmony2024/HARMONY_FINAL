@@ -2,10 +2,12 @@
 
 // Receiver and Sender ESP-C
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
 
 uint8_t ESP_D_broadcastAddress[] = {0x24, 0xdc, 0xc3, 0x43, 0xe0, 0x30}; // MAC Address of ESP-D
-uint8_t LVGL_broadcastAddress[] = {0x30, 0xc9, 0x22, 0x32, 0xb6, 0x14};  // MAC Address of LVGL
+// constexpr char WIFI_SSID[] = "realme 3 Pro";
+
 typedef struct SensorsData
 {
   float SolarVoltage;
@@ -25,20 +27,9 @@ typedef struct SensorsData
   float brgyEnergy;
   float brgyPowerFactor;
 
-  float healthVoltage;
-  float healthCurrent;
-  float healthPower;
-  float heatlhEnergy;
-  float healthPowerFactor;
-
-  float daycareVoltage;
-  float daycareCurrent;
-  float daycarePower;
-  float daycareEnergy;
-  float daycarePowerFactor;
-
   String time;
   String date;
+  int hour;
   // Add more fields if needed
 } SensorsData;
 SensorsData sensorsData;
@@ -76,6 +67,7 @@ typedef struct SensorsData1
 
   String time;
   String date;
+  int hour;
   // Add more fields if needed
 
   // Assignment operator to assign SensorsData to SensorsData1
@@ -98,20 +90,9 @@ typedef struct SensorsData1
     brgyEnergy = data.brgyEnergy;
     brgyPowerFactor = data.brgyPowerFactor;
 
-    healthVoltage = data.healthVoltage;
-    healthCurrent = data.healthCurrent;
-    healthPower = data.healthPower;
-    heatlhEnergy = data.heatlhEnergy;
-    healthPowerFactor = healthPowerFactor;
-
-    daycareVoltage = data.daycareVoltage;
-    daycareCurrent = data.daycareCurrent;
-    daycarePower = data.daycarePower;
-    daycareEnergy = data.daycareEnergy;
-    daycarePowerFactor = data.daycarePowerFactor;
-
     time = data.time;
     date = data.date;
+    hour = data.hour;
 
     return *this;
   }
@@ -120,26 +101,42 @@ typedef struct SensorsData1
 SensorsData1 sensorsData1;
 
 esp_now_peer_info_t peerInfo_ESP_D;
-esp_now_peer_info_t peerInfo_LVGL;
+
+// int32_t getWiFiChannel(const char *ssid)
+// {
+//   if (int32_t n = WiFi.scanNetworks())
+//   {
+//     for (uint8_t i = 0; i < n; i++)
+//     {
+//       if (!strcmp(ssid, WiFi.SSID(i).c_str()))
+//       {
+//         return WiFi.channel(i);
+//       }
+//     }
+//   }
+//   return 0;
+// }
+
+#include <PZEM004Tv30.h>
+#define healthPZEM_RX 16
+#define healthPZEM_TX 17
+PZEM004Tv30 healthPZEM(Serial1, healthPZEM_RX, healthPZEM_TX);
+#define daycarePZEM_RX 32
+#define daycarePZEM_TX 33
+PZEM004Tv30 daycarePZEM(Serial2, daycarePZEM_RX, daycarePZEM_TX);
 
 const int LED_PIN = LED_BUILTIN;
-bool blinking = false;
-int blinkCount = 0;
-int blinkTimes = 0;
-unsigned long blinkInterval = 0;
-unsigned long lastBlinkTime = 0;
 bool dataReceived = false;
-ulong previousMillis = 0;
+ulong previousMillis = 0, previousMillis1 = 0, prevMillis = 0;
 
-void blinkLED(int, int);
-void handleBlinking();
+void blinkLED(int);
 
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
 {
   memcpy(&sensorsData, incomingData, sizeof(sensorsData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%0.2f\n",
+  Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s,%d\n",
                 sensorsData.SolarVoltage,
                 sensorsData.SolarCurrent,
                 sensorsData.WindVoltage,
@@ -147,15 +144,19 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
                 sensorsData.WindSpeed_MS,
                 sensorsData.WindDirection,
                 sensorsData.BatteryVoltage,
-                sensorsData.BatteryPercentage);
+                sensorsData.BatteryPercentage,
+                sensorsData.brgyVoltage,
+                sensorsData.brgyCurrent,
+                sensorsData.brgyPower,
+                sensorsData.brgyEnergy,
+                sensorsData.brgyPowerFactor,
+                sensorsData.time,
+                sensorsData.date,
+                sensorsData.hour);
   sensorsData1 = sensorsData;
-
-  blinkLED(1, 25);
-
-  // Set dataReceived flag and record the current time
   dataReceived = true;
-  previousMillis = millis();
 }
+
 
 void setup()
 {
@@ -163,6 +164,10 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
 
   WiFi.mode(WIFI_STA);
+
+  // int32_t channel = getWiFiChannel(WIFI_SSID);
+  // esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+
 
   if (esp_now_init() != ESP_OK)
   {
@@ -180,65 +185,54 @@ void setup()
     return;
   }
 
-  // Add peer: LVGL
-  memcpy(peerInfo_LVGL.peer_addr, LVGL_broadcastAddress, 6);
-  peerInfo_LVGL.channel = 0;
-  peerInfo_LVGL.encrypt = false;
-  if (esp_now_add_peer(&peerInfo_LVGL) != ESP_OK)
-  {
-    Serial.println("Failed to add LVGL");
-    return;
-  }
-
   esp_now_register_recv_cb(OnDataRecv);
 }
 
 void loop()
 {
-  handleBlinking();
+  float healthVoltage = healthPZEM.voltage();
+  float healthCurrent = healthPZEM.current();
+  float healthPower = healthPZEM.power();
+  float healthEnergy = healthPZEM.energy();
+  float healthPowerFactor = healthPZEM.pf();
+  float daycareVoltage = daycarePZEM.voltage();
+  float daycareCurrent = daycarePZEM.current();
+  float daycarePower = daycarePZEM.power();
+  float daycareEnergy = daycarePZEM.energy();
+  float daycarePowerFactor = daycarePZEM.pf();
 
-  if (dataReceived && (millis() - previousMillis >= 100))
+  sensorsData1.healthVoltage = healthVoltage;
+  sensorsData1.healthCurrent = healthCurrent;
+  sensorsData1.healthPower = healthPower;
+  sensorsData1.heatlhEnergy = healthEnergy;
+  sensorsData1.healthPowerFactor = healthPowerFactor;
+  sensorsData1.daycareVoltage = daycareVoltage;
+  sensorsData1.daycareCurrent = daycareCurrent;
+  sensorsData1.daycarePower = daycarePower;
+  sensorsData1.daycareEnergy = daycareEnergy;
+  sensorsData1.daycarePowerFactor = daycarePowerFactor;
+
+  if (dataReceived && (millis() - prevMillis >= 100))
   {
+    blinkLED(25);
+    dataReceived = false;
+  }
+
+  if (millis() - previousMillis >= 100)
+  {
+    previousMillis = millis();
     // Send data to ESP-D
     esp_err_t result = esp_now_send(ESP_D_broadcastAddress, (uint8_t *)&sensorsData1, sizeof(sensorsData1));
     if (result == ESP_OK)
     {
       Serial.println("Sent to ESP-D successfully");
     }
-
-    // Send data to LVGL
-    esp_err_t result1 = esp_now_send(LVGL_broadcastAddress, (uint8_t *)&sensorsData1, sizeof(sensorsData1));
-    if (result1 == ESP_OK)
-    {
-      Serial.println("Sent to LVGL successfully");
-    }
-
-    // Reset the flag
-    dataReceived = false;
   }
 }
 
-void blinkLED(int count, int interval)
+void blinkLED(int interval)
 {
-  blinking = true;
-  blinkCount = 0;
-  blinkTimes = count * 2;
-  blinkInterval = interval;
-  lastBlinkTime = millis();
-}
-
-void handleBlinking()
-{
-  if (blinking && (millis() - lastBlinkTime >= blinkInterval))
-  {
-    lastBlinkTime = millis();
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    blinkCount++;
-
-    if (blinkCount >= blinkTimes)
-    {
-      blinking = false;
-      digitalWrite(LED_PIN, LOW);
-    }
-  }
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(interval);
+  digitalWrite(LED_BUILTIN, LOW);
 }

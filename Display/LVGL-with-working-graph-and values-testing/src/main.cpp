@@ -20,7 +20,11 @@
 #include "chartUpdater.h"
 
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
+
+// static const char *ssid = "realme 3 Pro";
+// static const char *password = "rafrafraf";
 
 /* ------------- VARIABLES -------------*/
 // SENSORS DATA TO RECEIVE FROM ESP32-B
@@ -57,20 +61,29 @@ typedef struct SensorsData
 
   String time;
   String date;
+  int hour;
   // Add more fields if needed
 } SensorsData;
 SensorsData sensorsData;
 
+float checkNaN(float value)
+{
+  if (isnan(value))
+  {
+    return 0;
+  }
+  return value;
+}
+
 float Solar_Power;
 float Wind_Power;
-float Total_Power_Consumption = sensorsData.brgyPower + sensorsData.healthPower + sensorsData.daycarePower;
+float Total_Power_Consumption;
 String windDirection;
 String powerStatus;
-
-int id;
 /* ------------- END OF VARIABLES -------------*/
 
 /* ------------- FUNCTION DECLARATION ------------- */
+void sensorPage();
 void forBatt();
 String direction(int);
 void facilityStatus(float);
@@ -87,7 +100,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
   memcpy(&sensorsData, incomingData, sizeof(sensorsData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%0.2f\n",
+  Serial.printf("%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%d,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%0.2f,%s,%s,%d\n",
                 sensorsData.SolarVoltage,
                 sensorsData.SolarCurrent,
                 sensorsData.WindVoltage,
@@ -95,7 +108,25 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
                 sensorsData.WindSpeed_MS,
                 sensorsData.WindDirection,
                 sensorsData.BatteryVoltage,
-                sensorsData.BatteryPercentage);
+                sensorsData.BatteryPercentage,
+                sensorsData.brgyVoltage,
+                sensorsData.brgyCurrent,
+                sensorsData.brgyPower,
+                sensorsData.brgyEnergy,
+                sensorsData.brgyPowerFactor,
+                sensorsData.healthVoltage,
+                sensorsData.healthCurrent,
+                sensorsData.healthPower,
+                sensorsData.heatlhEnergy,
+                sensorsData.healthPowerFactor,
+                sensorsData.daycareVoltage,
+                sensorsData.daycareCurrent,
+                sensorsData.daycarePower,
+                sensorsData.daycareEnergy,
+                sensorsData.daycarePowerFactor,
+                sensorsData.time,
+                sensorsData.date,
+                sensorsData.hour);
 }
 /*--------------END OF RECEIVING DATA USING ESP-NOW -------------*/
 
@@ -110,6 +141,9 @@ void setup()
   Serial.begin(115200);
 
   WiFi.mode(WIFI_STA);
+  // WiFi.mode(WIFI_AP_STA);
+  // WiFi.setSleep(false);
+  // WiFi.begin(ssid, password);
 
   if (esp_now_init() != ESP_OK)
   {
@@ -124,12 +158,23 @@ static uint32_t prev_millis = 0;
 /* ------------- LOOP ------------- */
 void loop()
 {
-  // checkWiFiConnection();
-
+  sensorPage();
   Solar_Power = sensorsData.SolarVoltage * sensorsData.SolarCurrent;
   Wind_Power = sensorsData.WindVoltage * sensorsData.WindCurrent;
+  if (isnan(sensorsData.brgyPower))
+  {
+    sensorsData.brgyPower = 0;
+  }
+  if (isnan(sensorsData.healthPower))
+  {
+    sensorsData.healthPower = 0;
+  }
+  if (isnan(sensorsData.daycarePower))
+  {
+    sensorsData.daycarePower = 0;
+  }
+  Total_Power_Consumption = checkNaN(sensorsData.brgyPower) + checkNaN(sensorsData.healthPower) + checkNaN(sensorsData.daycarePower);
 
-  sensorStatus(ui_statusBattVoltage, SENSOR_OK);
   uint32_t current_millis = millis();
 
   if (current_millis - prev_millis >= 1000)
@@ -147,37 +192,114 @@ void loop()
 /* ------------- END OF LOOP -------------*/
 
 /* ------------- BATTERY -------------*/
-int id_time(int current_time)
-{
-  return current_time / 100;
-}
-
 void forBatt()
 {
-  chartBattUpdate(90, 0);
-  chartBattUpdate(sensorsData.BatteryPercentage, 1);
-  chartBattUpdate(sensorsData.BatteryPercentage, 2);
-  // id = id_time(SensorDataLCD.RTC_TimeInt);
-  lv_bar_set_value(ui_batteryBar, sensorsData.BatteryPercentage, LV_ANIM_OFF);         // updates battery bar
-  lv_label_set_text(ui_batteryPercent, String(sensorsData.BatteryPercentage).c_str()); // updates battery percent label
-  // chartBattUpdate(SensorDataLCD.Battery_Percentage, id);                                  // updates battery chart
-
-  // updates chart every hour and resets it every day
-  // if (id >= 23)
-  // {
-  //   id = 0;
-  // }
-  // else
-  // {
-  //   // updates id every hour
-  //   if (prev_millis >= 3600000)
-  //   {
-  //     id++;
-  //   }
-  // }
+  int battPercent = (int)sensorsData.BatteryPercentage;
+  chartBattUpdate(battPercent, sensorsData.hour);
+  lv_bar_set_value(ui_batteryBar, battPercent, LV_ANIM_OFF);         // updates battery bar
+  lv_label_set_text(ui_batteryPercent, String(battPercent).c_str()); // updates battery percent label
+  if (battPercent >= 0)
+  {
+    sensorStatus(ui_statusBattVoltage, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusBattVoltage, SENSOR_ERROR);
+  }
 }
 
 /* ------------- END OF BATTERY -------------*/
+
+void sensorPage()
+{
+  // Solar Current
+  if (!isnan(sensorsData.SolarCurrent))
+  {
+    sensorStatus(ui_statusSolarCurrent, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusSolarCurrent, SENSOR_ERROR);
+  }
+  // Wind Current
+  if (!isnan(sensorsData.WindCurrent))
+  {
+    sensorStatus(ui_statusWindCurrent, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusWindCurrent, SENSOR_ERROR);
+  }
+  // Solar Voltage
+  if (!isnan(sensorsData.SolarVoltage))
+  {
+    sensorStatus(ui_statusSolarVoltage, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusSolarVoltage, SENSOR_ERROR);
+  }
+  // Wind Voltage
+  if (!isnan(sensorsData.WindVoltage))
+  {
+    sensorStatus(ui_statusWindVoltage, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusWindVoltage, SENSOR_ERROR);
+  }
+  // Battery Voltage
+  if (!isnan(sensorsData.BatteryVoltage))
+  {
+    sensorStatus(ui_statusBattVoltage, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusBattVoltage, SENSOR_ERROR);
+  }
+  // Anemometer
+  if (!isnan(sensorsData.WindSpeed_MS))
+  {
+    sensorStatus(ui_statusAnemo, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusAnemo, SENSOR_ERROR);
+  }
+  // PZEM Brgy Hall
+  if (!isnan(sensorsData.brgyPower))
+  {
+    sensorStatus(ui_statusPzemA, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusPzemA, SENSOR_UNAVAILABLE);
+  }
+  // PZEM Health Center
+  if (!isnan(sensorsData.healthPower))
+  {
+    sensorStatus(ui_statusPzemB, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusPzemB, SENSOR_UNAVAILABLE);
+  }
+  // PZEM Daycare
+  if (!isnan(sensorsData.daycarePower))
+  {
+    sensorStatus(ui_statusPzemC, SENSOR_OK);
+  }
+  else
+  {
+    sensorStatus(ui_statusPzemC, SENSOR_UNAVAILABLE);
+  }
+  // GSM Module
+  sensorStatus(ui_statusSim, SENSOR_NOT_CONNECTED);
+  // WIFI
+  sensorStatus(ui_statusWifi, SENSOR_CONNECTED);
+  // MICRO SD CARD
+  sensorStatus(ui_statusCard, SENSOR_CONNECTED);
+}
 
 /* ------------- LABELS -------------*/
 String direction(int windDegrees)
@@ -216,7 +338,7 @@ String direction(int windDegrees)
   }
   else
   {
-    return "UKNOWN";
+    return "UNKNOWN";
   }
 }
 
@@ -237,7 +359,7 @@ void facilityStatus(float totalConsumed)
     powerConsumptionStatus(ui_facilitiesStatus, POWER_HIGH);
     updateLvglText(ui_facilitiesPower, String(totalConsumed).c_str(), TEXT_HIGH);
   }
-  else if (totalConsumed > 801)
+  else if (totalConsumed > 900)
   {
     powerConsumptionStatus(ui_facilitiesStatus, POWER_CRITICAL);
     updateLvglText(ui_facilitiesPower, String(totalConsumed).c_str(), TEXT_CRITICAL);
@@ -252,8 +374,8 @@ void facilityStatus(float totalConsumed)
 void forLabels()
 {
   /* ------------- TIME AND DATE ------------- */
-  // lv_label_set_text(ui_headerDate, String(SensorDataLCD.RTC_Date).c_str());
-  // lv_label_set_text(ui_headerTime, String(SensorDataLCD.RTC_Time).c_str());
+  lv_label_set_text(ui_headerDate, String(sensorsData.date).c_str());
+  lv_label_set_text(ui_headerTime, String(sensorsData.time).c_str());
 
   /* ------------- SOLAR VALUES ------------- */
   lv_label_set_text(ui_solarVoltage, String(sensorsData.SolarVoltage).c_str());
@@ -265,7 +387,7 @@ void forLabels()
   lv_label_set_text(ui_windCurrent, String(sensorsData.WindCurrent).c_str());
   lv_label_set_text(ui_windPower, String(Wind_Power).c_str());
 
-  lv_label_set_text(ui_speedWind, String(sensorsData.WindSpeed_MS * 3.6).c_str());
+  lv_label_set_text(ui_speedWind, String(sensorsData.WindSpeed_MS).c_str());
   lv_label_set_text(ui_degreesWind, String(sensorsData.WindDirection).c_str());
 
   /* ------------- SOLAR & WIND VALUES ------------- */
@@ -276,7 +398,7 @@ void forLabels()
   lv_label_set_text(ui_solarWindCurrent, String(solarWindCurrent).c_str());
   lv_label_set_text(ui_solarWindPower, String(solarWindPower).c_str());
 
-  lv_label_set_text(ui_speedSolarWind, String(sensorsData.WindSpeed_MS * 3.6).c_str());
+  lv_label_set_text(ui_speedSolarWind, String(sensorsData.WindSpeed_MS).c_str());
   lv_label_set_text(ui_degreesSolarWind, String(sensorsData.WindDirection).c_str());
 
   windDirection = direction(sensorsData.WindDirection);
@@ -299,7 +421,7 @@ void forLabels()
   lv_label_set_text(ui_healthFactor, String(sensorsData.healthPowerFactor).c_str());
   // for daycare center
   lv_label_set_text(ui_daycarePower, String(sensorsData.daycarePower).c_str());
-  lv_label_set_text(ui_daycarePower, String(sensorsData.daycarePower).c_str());
+  lv_label_set_text(ui_daycarePower1, String(sensorsData.daycarePower).c_str());
   lv_label_set_text(ui_daycareEnergy, String(sensorsData.daycareEnergy).c_str());
   lv_label_set_text(ui_daycareFactor, String(sensorsData.daycarePowerFactor).c_str());
 }
@@ -315,11 +437,11 @@ void forCharts()
 
 void backLight()
 {
-  if (lv_disp_get_inactive_time(NULL) > 15000)
+  if (lv_disp_get_inactive_time(NULL) > 60000)
   {
-    if (lv_disp_get_inactive_time(NULL) > 30000)
+    if (lv_disp_get_inactive_time(NULL) > 90000)
     {
-      if (lv_disp_get_inactive_time(NULL) > 60000)
+      if (lv_disp_get_inactive_time(NULL) > 120000)
       {
         smartdisplay_lcd_set_backlight(0);
       }
@@ -338,23 +460,3 @@ void backLight()
     smartdisplay_lcd_set_backlight(1);
   }
 }
-
-// For Debugging Only
-// void DisplayResult()
-// {
-//   Serial.println("\n=== TIME ===");
-//   Serial.printf("Date: %s  Time: %s\n", sensorsData.date.c_str(), sensorsData.time.c_str());
-//   Serial.println("=== SOLAR ===");
-//   Serial.printf("Voltage: %0.2f  Current: %0.2f\n", sensorsData.SolarVoltage, sensorsData.SolarCurrent);
-//   Serial.println("=== WIND ===");
-//   Serial.printf("Voltage: %0.2f  Current: %0.2f  Wind Speed: %0.2fkph  Wind Direction: %d\n", sensorsData.WindVoltage, sensorsData.WindCurrent, round(sensorsData.WindSpeed_MS * 3.6, 2), sensorsData.WindDirection);
-//   Serial.println("=== BATTERY ===");
-//   Serial.printf("Voltage: %0.2f  Percentage: %d%\n", SensorDataLCD.Battery_Voltage, SensorDataLCD.Battery_Percentage);
-//   Serial.println("=== ENERGY CONSUMPTION ===");
-//   Serial.printf("PZEM-A: %0.2f , %0.2f , %0.2f , %0.2f , %0.2f , %0.2f \n", SensorDataLCD.PZEM_A_Voltage, SensorDataLCD.PZEM_A_Current, SensorDataLCD.PZEM_A_Power, SensorDataLCD.PZEM_A_Energy, SensorDataLCD.PZEM_A_Frequency, SensorDataLCD.PZEM_A_PowerFactor);
-//   Serial.printf("PZEM-B: %0.2f , %0.2f , %0.2f , %0.2f , %0.2f , %0.2f \n", SensorDataLCD.PZEM_B_Voltage, SensorDataLCD.PZEM_B_Current, SensorDataLCD.PZEM_B_Power, SensorDataLCD.PZEM_B_Energy, SensorDataLCD.PZEM_B_Frequency, SensorDataLCD.PZEM_B_PowerFactor);
-//   Serial.printf("PZEM-C: %0.2f , %0.2f , %0.2f , %0.2f , %0.2f , %0.2f \n", SensorDataLCD.PZEM_C_Voltage, SensorDataLCD.PZEM_C_Current, SensorDataLCD.PZEM_C_Power, SensorDataLCD.PZEM_C_Energy, SensorDataLCD.PZEM_C_Frequency, SensorDataLCD.PZEM_C_PowerFactor);
-//   Serial.printf("Wind Speed: %0.2f  Wind Direction: %d\n", SensorDataLCD.WindSpeed_kph, SensorDataLCD.Wind_Direction);
-//   Serial.println(SensorDataLCD.RTC_TimeInt);
-//   Serial.println(id);
-// }
